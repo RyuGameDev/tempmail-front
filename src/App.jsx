@@ -66,6 +66,18 @@ export function App() {
   const [musicStarted, setMusicStarted] = useState(false);
   const audioRef = useRef(null);
 
+  const playRandomTrack = () => {
+    const audio = audioRef.current;
+    if (!audio || musicPlaylist.length === 0) {
+      return Promise.reject(new Error('NO_MUSIC_TRACKS'));
+    }
+
+    const nextTrack = musicPlaylist[Math.floor(Math.random() * musicPlaylist.length)];
+    audio.src = nextTrack;
+    audio.volume = 0.36;
+    return audio.play();
+  };
+
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem('theme', theme);
@@ -81,19 +93,15 @@ export function App() {
       return undefined;
     }
 
-    const playRandomTrack = () => {
-      const nextTrack = musicPlaylist[Math.floor(Math.random() * musicPlaylist.length)];
-      audio.src = nextTrack;
-      audio.volume = 0.36;
-      audio.play().catch(() => setMusicEnabled(false));
+    const playNextTrack = () => {
+      playRandomTrack().catch(() => setMusicEnabled(false));
     };
 
-    audio.addEventListener('ended', playRandomTrack);
-    playRandomTrack();
+    audio.addEventListener('ended', playNextTrack);
 
     return () => {
       audio.pause();
-      audio.removeEventListener('ended', playRandomTrack);
+      audio.removeEventListener('ended', playNextTrack);
     };
   }, [musicEnabled, musicStarted]);
 
@@ -102,7 +110,11 @@ export function App() {
       return undefined;
     }
 
-    const startAfterInteraction = () => setMusicStarted(true);
+    const startAfterInteraction = () => {
+      playRandomTrack()
+        .then(() => setMusicStarted(true))
+        .catch(() => setMusicEnabled(false));
+    };
     const options = { once: true, passive: true };
 
     window.addEventListener('click', startAfterInteraction, options);
@@ -285,15 +297,20 @@ export function App() {
   };
 
   const toggleMusic = () => {
-    setMusicEnabled((enabled) => {
-      if (enabled) {
-        setMusicStarted(false);
-      } else {
-        setMusicStarted(true);
-      }
+    if (musicEnabled) {
+      audioRef.current?.pause();
+      setMusicStarted(false);
+      setMusicEnabled(false);
+      return;
+    }
 
-      return !enabled;
-    });
+    setMusicEnabled(true);
+    playRandomTrack()
+      .then(() => setMusicStarted(true))
+      .catch(() => {
+        setMusicStarted(false);
+        setMusicEnabled(false);
+      });
   };
 
   return (
