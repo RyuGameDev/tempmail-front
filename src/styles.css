@@ -447,12 +447,23 @@ input {
 }
 
 .history-delete {
-  display: inline-grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 24px;
   height: 24px;
+  min-height: 24px;
+  border: 0;
   border-radius: 6px;
+  padding: 0;
+  background: transparent;
   color: #64748b;
+  line-height: 1;
+}
+
+.history-delete svg {
+  display: block;
+  flex: 0 0 auto;
 }
 
 .history-delete:hover,
