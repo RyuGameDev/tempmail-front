@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import {
   ArrowLeft,
@@ -8,6 +8,7 @@ import {
   Inbox,
   LoaderCircle,
   Mail,
+  Music2,
   Moon,
   Power,
   RefreshCw,
@@ -18,6 +19,12 @@ import { api } from './api.js';
 
 const savedMailboxKey = 'ryudev-temp-mailbox-id';
 const savedMailboxHistoryKey = 'ryudev-temp-mailbox-history';
+const savedMusicKey = 'ryudev-temp-music-enabled';
+const musicPlaylist = [
+  '/music/track-1.mp3',
+  '/music/track-2.mp3',
+  '/music/track-3.mp3'
+];
 
 function getSavedMailboxHistory() {
   try {
@@ -53,11 +60,61 @@ export function App() {
   const [status, setStatus] = useState('Ready');
   const [copiedAddress, setCopiedAddress] = useState('');
   const [loadingAction, setLoadingAction] = useState('');
+  const [musicEnabled, setMusicEnabled] = useState(() => localStorage.getItem(savedMusicKey) === 'true');
+  const [musicStarted, setMusicStarted] = useState(false);
+  const audioRef = useRef(null);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem(savedMusicKey, String(musicEnabled));
+  }, [musicEnabled]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !musicEnabled || !musicStarted) {
+      return undefined;
+    }
+
+    const playRandomTrack = () => {
+      const nextTrack = musicPlaylist[Math.floor(Math.random() * musicPlaylist.length)];
+      audio.src = nextTrack;
+      audio.volume = 0.36;
+      audio.play().catch(() => setMusicEnabled(false));
+    };
+
+    audio.addEventListener('ended', playRandomTrack);
+    playRandomTrack();
+
+    return () => {
+      audio.pause();
+      audio.removeEventListener('ended', playRandomTrack);
+    };
+  }, [musicEnabled, musicStarted]);
+
+  useEffect(() => {
+    if (!musicEnabled || musicStarted) {
+      return undefined;
+    }
+
+    const startAfterInteraction = () => setMusicStarted(true);
+    const options = { once: true, passive: true };
+
+    window.addEventListener('click', startAfterInteraction, options);
+    window.addEventListener('touchstart', startAfterInteraction, options);
+    window.addEventListener('wheel', startAfterInteraction, options);
+    window.addEventListener('keydown', startAfterInteraction, { once: true });
+
+    return () => {
+      window.removeEventListener('click', startAfterInteraction);
+      window.removeEventListener('touchstart', startAfterInteraction);
+      window.removeEventListener('wheel', startAfterInteraction);
+      window.removeEventListener('keydown', startAfterInteraction);
+    };
+  }, [musicEnabled, musicStarted]);
 
   useEffect(() => {
     api.domains().then(({ domains }) => {
@@ -209,8 +266,32 @@ export function App() {
     setTimeout(() => setCopiedAddress(''), 1400);
   };
 
+  const toggleMusic = () => {
+    setMusicEnabled((enabled) => {
+      if (enabled) {
+        setMusicStarted(false);
+      } else {
+        setMusicStarted(true);
+      }
+
+      return !enabled;
+    });
+  };
+
   return (
     <main className="app-shell">
+      <audio ref={audioRef} preload="none" />
+      <button
+        className={`music-toggle ${musicEnabled ? 'on' : 'off'}`}
+        onClick={toggleMusic}
+        type="button"
+        title={musicEnabled ? 'Matikan musik' : 'Nyalakan musik setelah interaksi'}
+      >
+        <span className="music-led" />
+        <Music2 size={17} />
+        <strong>{musicEnabled ? 'ON' : 'OFF'}</strong>
+      </button>
+
       <header className="topbar">
         <div>
           <p className="eyebrow">Ryudev Mail Gateway</p>
