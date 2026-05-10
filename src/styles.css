@@ -62,19 +62,19 @@ button:disabled {
 
 .music-toggle {
   position: fixed;
-  right: 20px;
-  bottom: 20px;
+  left: 16px;
+  bottom: 16px;
   z-index: 20;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 40px;
+  gap: 6px;
+  min-height: 32px;
   border: 1px solid rgba(112, 128, 150, 0.28);
   border-radius: 999px;
-  padding: 0 13px;
+  padding: 0 10px;
   background: rgba(255, 255, 255, 0.92);
   color: #172033;
-  box-shadow: 0 12px 28px rgba(25, 38, 65, 0.16);
+  box-shadow: 0 8px 18px rgba(25, 38, 65, 0.14);
   backdrop-filter: blur(10px);
 }
 
@@ -82,25 +82,25 @@ button:disabled {
   border-color: rgba(168, 185, 210, 0.22);
   background: rgba(21, 29, 42, 0.92);
   color: #eef3fb;
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.32);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
 }
 
 .music-toggle strong {
-  font-size: 0.78rem;
+  font-size: 0.68rem;
   letter-spacing: 0;
 }
 
 .music-led {
-  width: 9px;
-  height: 9px;
+  width: 7px;
+  height: 7px;
   border-radius: 999px;
   background: #94a3b8;
-  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.16);
+  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.16);
 }
 
 .music-toggle.on .music-led {
   background: #22c55e;
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.16), 0 0 14px rgba(34, 197, 94, 0.72);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.16), 0 0 10px rgba(34, 197, 94, 0.7);
 }
 
 .topbar {
@@ -368,10 +368,29 @@ input {
 }
 
 .section-title {
-  justify-content: flex-start;
   color: #435169;
   font-size: 0.88rem;
   font-weight: 800;
+}
+
+.section-title div {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.text-action {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #1769e0;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+:root[data-theme="dark"] .text-action {
+  color: #66d6c7;
 }
 
 :root[data-theme="dark"] .section-title {
@@ -398,6 +417,19 @@ input {
   text-align: left;
 }
 
+.history-item > button:first-child {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
 :root[data-theme="dark"] .history-item {
   border-color: rgba(168, 185, 210, 0.16);
   background: rgba(12, 17, 25, 0.54);
@@ -412,6 +444,22 @@ input {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.history-delete {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  color: #64748b;
+}
+
+.history-delete:hover,
+.history-delete:focus-visible {
+  background: rgba(239, 68, 68, 0.1);
+  color: #b91c1c;
+  outline: none;
 }
 
 .inbox-panel {

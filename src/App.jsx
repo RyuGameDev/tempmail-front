@@ -13,6 +13,7 @@ import {
   Power,
   RefreshCw,
   Sun,
+  Trash2,
   Wand2
 } from 'lucide-react';
 import { api } from './api.js';
@@ -20,11 +21,12 @@ import { api } from './api.js';
 const savedMailboxKey = 'ryudev-temp-mailbox-id';
 const savedMailboxHistoryKey = 'ryudev-temp-mailbox-history';
 const savedMusicKey = 'ryudev-temp-music-enabled';
-const musicPlaylist = [
-  '/music/track-1.mp3',
-  '/music/track-2.mp3',
-  '/music/track-3.mp3'
-];
+const musicTracks = import.meta.glob('./assets/music/*.{mp3,ogg,wav}', {
+  eager: true,
+  query: '?url',
+  import: 'default'
+});
+const musicPlaylist = Object.values(musicTracks);
 
 function getSavedMailboxHistory() {
   try {
@@ -75,7 +77,7 @@ export function App() {
 
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio || !musicEnabled || !musicStarted) {
+    if (!audio || !musicEnabled || !musicStarted || musicPlaylist.length === 0) {
       return undefined;
     }
 
@@ -259,6 +261,22 @@ export function App() {
     }
   };
 
+  const removeHistoryItem = (event, mailboxId) => {
+    event.stopPropagation();
+    setMailboxHistory((current) => {
+      const nextHistory = current.filter((item) => item.id !== mailboxId);
+      localStorage.setItem(savedMailboxHistoryKey, JSON.stringify(nextHistory));
+      return nextHistory;
+    });
+    setStatus('Riwayat alamat dihapus');
+  };
+
+  const clearHistory = () => {
+    setMailboxHistory([]);
+    localStorage.removeItem(savedMailboxHistoryKey);
+    setStatus('Riwayat alamat dibersihkan');
+  };
+
   const copyAddress = async (address = mailbox?.address) => {
     if (!address) return;
     await navigator.clipboard.writeText(address);
@@ -370,20 +388,30 @@ export function App() {
           {mailboxHistory.length > 0 ? (
             <div className="history-panel">
               <div className="section-title">
-                <History size={17} />
-                <span>Riwayat alamat</span>
+                <div>
+                  <History size={17} />
+                  <span>Riwayat alamat</span>
+                </div>
+                <button className="text-action" type="button" onClick={clearHistory}>
+                  Bersihkan
+                </button>
               </div>
               <div className="history-list">
                 {mailboxHistory.map((item) => (
-                  <button
-                    className={`history-item ${item.id === mailbox?.id ? 'selected' : ''}`}
-                    key={item.id}
-                    onClick={() => selectMailbox(item)}
-                    disabled={Boolean(loadingAction)}
-                  >
-                    <span>{item.address}</span>
-                    {loadingAction === `history:${item.id}` ? <LoaderCircle className="spin" size={16} /> : null}
-                  </button>
+                  <div className={`history-item ${item.id === mailbox?.id ? 'selected' : ''}`} key={item.id}>
+                    <button type="button" onClick={() => selectMailbox(item)} disabled={Boolean(loadingAction)}>
+                      <span>{item.address}</span>
+                      {loadingAction === `history:${item.id}` ? <LoaderCircle className="spin" size={16} /> : null}
+                    </button>
+                    <button
+                      className="history-delete"
+                      type="button"
+                      title="Hapus dari riwayat"
+                      onClick={(event) => removeHistoryItem(event, item.id)}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>
