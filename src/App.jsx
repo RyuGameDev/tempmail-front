@@ -20,7 +20,7 @@ import { api } from './api.js';
 
 const savedMailboxKey = 'ryudev-temp-mailbox-id';
 const savedMailboxHistoryKey = 'ryudev-temp-mailbox-history';
-const savedMusicKey = 'ryudev-temp-music-enabled';
+const savedMusicKey = 'ryudev-temp-music-enabled-v2';
 const musicTracks = import.meta.glob('./assets/music/*.{mp3,ogg,wav}', {
   eager: true,
   query: '?url',
@@ -62,7 +62,7 @@ export function App() {
   const [status, setStatus] = useState('Ready');
   const [copiedAddress, setCopiedAddress] = useState('');
   const [loadingAction, setLoadingAction] = useState('');
-  const [musicEnabled, setMusicEnabled] = useState(() => localStorage.getItem(savedMusicKey) === 'true');
+  const [musicEnabled, setMusicEnabled] = useState(() => localStorage.getItem(savedMusicKey) !== 'false');
   const [musicStarted, setMusicStarted] = useState(false);
   const audioRef = useRef(null);
 
@@ -94,7 +94,7 @@ export function App() {
     }
 
     const playNextTrack = () => {
-      playRandomTrack().catch(() => setMusicEnabled(false));
+      playRandomTrack().catch(() => setMusicStarted(false));
     };
 
     audio.addEventListener('ended', playNextTrack);
@@ -110,19 +110,25 @@ export function App() {
       return undefined;
     }
 
-    const startAfterInteraction = () => {
+    const startAfterInteraction = (event) => {
+      if (event.target?.closest?.('.music-toggle')) {
+        return;
+      }
+
       playRandomTrack()
         .then(() => setMusicStarted(true))
-        .catch(() => setMusicEnabled(false));
+        .catch(() => setMusicStarted(false));
     };
     const options = { once: true, passive: true };
 
+    window.addEventListener('pointerdown', startAfterInteraction, options);
     window.addEventListener('click', startAfterInteraction, options);
     window.addEventListener('touchstart', startAfterInteraction, options);
     window.addEventListener('wheel', startAfterInteraction, options);
     window.addEventListener('keydown', startAfterInteraction, { once: true });
 
     return () => {
+      window.removeEventListener('pointerdown', startAfterInteraction);
       window.removeEventListener('click', startAfterInteraction);
       window.removeEventListener('touchstart', startAfterInteraction);
       window.removeEventListener('wheel', startAfterInteraction);
@@ -309,7 +315,6 @@ export function App() {
       .then(() => setMusicStarted(true))
       .catch(() => {
         setMusicStarted(false);
-        setMusicEnabled(false);
       });
   };
 
@@ -319,6 +324,7 @@ export function App() {
       <button
         className={`music-toggle ${musicEnabled ? 'on' : 'off'}`}
         onClick={toggleMusic}
+        onPointerDown={(event) => event.stopPropagation()}
         type="button"
         title={musicEnabled ? 'Matikan musik' : 'Nyalakan musik setelah interaksi'}
       >
