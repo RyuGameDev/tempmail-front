@@ -31,10 +31,25 @@ export const api = {
       body: JSON.stringify({ localPart, domain })
     }),
   mailbox: (id) => request(`/api/mailboxes/${id}`),
+  mailboxByAddress: (address) => request(`/api/mailboxes/by-address/${encodeURIComponent(address)}`),
   setActive: (id, active) =>
     request(`/api/mailboxes/${id}/active`, {
       method: 'PATCH',
       body: JSON.stringify({ active })
     }),
-  emails: (mailboxId) => request(`/api/mailboxes/${mailboxId}/emails`)
+  deleteMailbox: (id) =>
+    request(`/api/mailboxes/${id}`, {
+      method: 'DELETE'
+    }),
+  emails: (mailboxId) => request(`/api/mailboxes/${mailboxId}/emails`),
+  email: (mailboxId, emailId) => request(`/api/mailboxes/${mailboxId}/emails/${emailId}`),
+  markEmailRead: (mailboxId, emailId, read = true) =>
+    request(`/api/mailboxes/${mailboxId}/emails/${emailId}/read`, {
+      method: 'PATCH',
+      body: JSON.stringify({ read })
+    }),
+  deleteEmail: (mailboxId, emailId) =>
+    request(`/api/mailboxes/${mailboxId}/emails/${emailId}`, {
+      method: 'DELETE'
+    })
 };

@@ -596,13 +596,152 @@ input {
   font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
 }
 
+.api-docs {
+  max-width: 1360px;
+  margin: 18px auto 0;
+  border: 1px solid rgba(112, 128, 150, 0.22);
+  border-radius: 8px;
+  padding: 22px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 18px 45px rgba(25, 38, 65, 0.08);
+}
+
+:root[data-theme="dark"] .api-docs {
+  border-color: rgba(168, 185, 210, 0.18);
+  background: rgba(18, 24, 34, 0.92);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.22);
+}
+
+.api-docs-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.api-docs-heading h2 {
+  margin-bottom: 0;
+  font-size: 1.15rem;
+}
+
+.api-docs-heading code,
+.api-endpoint code,
+.api-notes code {
+  border-radius: 6px;
+  padding: 4px 7px;
+  background: rgba(23, 105, 224, 0.08);
+  color: #1d4ed8;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.82rem;
+}
+
+:root[data-theme="dark"] .api-docs-heading code,
+:root[data-theme="dark"] .api-endpoint code,
+:root[data-theme="dark"] .api-notes code {
+  background: rgba(102, 214, 199, 0.1);
+  color: #7dd3fc;
+}
+
+.api-docs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.api-endpoint {
+  display: grid;
+  gap: 9px;
+  border: 1px solid rgba(112, 128, 150, 0.18);
+  border-radius: 8px;
+  padding: 13px;
+  background: rgba(255, 255, 255, 0.54);
+}
+
+:root[data-theme="dark"] .api-endpoint {
+  border-color: rgba(168, 185, 210, 0.14);
+  background: rgba(12, 17, 25, 0.54);
+}
+
+.api-endpoint div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.api-endpoint p,
+.api-notes span {
+  margin: 0;
+  color: #66748a;
+  font-size: 0.9rem;
+}
+
+:root[data-theme="dark"] .api-endpoint p,
+:root[data-theme="dark"] .api-notes span {
+  color: #9badc5;
+}
+
+.api-method {
+  flex: 0 0 auto;
+  min-width: 58px;
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-align: center;
+}
+
+.method-get {
+  background: #2563eb;
+}
+
+.method-post {
+  background: #16a34a;
+}
+
+.method-patch {
+  background: #d97706;
+}
+
+.method-delete {
+  background: #dc2626;
+}
+
+.api-notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(20, 184, 166, 0.09);
+}
+
+.api-key-note {
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.api-key-note a {
+  color: #1d4ed8;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+:root[data-theme="dark"] .api-key-note a {
+  color: #7dd3fc;
+}
+
 @media (max-width: 980px) {
   .app-shell {
     padding: 18px;
   }
 
   .workspace,
-  .mail-layout {
+  .mail-layout,
+  .api-docs-grid {
     grid-template-columns: 1fr;
   }
 

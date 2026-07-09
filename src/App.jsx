@@ -203,6 +203,20 @@ export function App() {
   }, [mailbox?.id]);
 
   const unreadCount = useMemo(() => emails.filter((email) => !email.readAt).length, [emails]);
+  const apiReference = [
+    ['GET', '/api/health', 'Cek status backend.'],
+    ['GET', '/api/domains', 'Ambil domain aktif untuk mailbox.'],
+    ['POST', '/api/mailboxes/random', 'Buat mailbox random. Body: { "domain": "example.com" }.'],
+    ['POST', '/api/mailboxes/custom', 'Buat atau buka mailbox custom. Body: { "localPart": "nama", "domain": "example.com" }.'],
+    ['GET', '/api/mailboxes/by-address/:address', 'Cari mailbox dari alamat email lengkap.'],
+    ['GET', '/api/mailboxes/:id', 'Ambil detail mailbox dan perbarui lastSeenAt.'],
+    ['PATCH', '/api/mailboxes/:id/active', 'Aktif/nonaktifkan mailbox. Body: { "active": true }.'],
+    ['DELETE', '/api/mailboxes/:id', 'Hapus mailbox beserta emailnya.'],
+    ['GET', '/api/mailboxes/:id/emails', 'Ambil daftar email mailbox.'],
+    ['GET', '/api/mailboxes/:id/emails/:emailId', 'Ambil detail satu email.'],
+    ['PATCH', '/api/mailboxes/:id/emails/:emailId/read', 'Tandai read/unread. Body: { "read": true }.'],
+    ['DELETE', '/api/mailboxes/:id/emails/:emailId', 'Hapus satu email dari mailbox.']
+  ];
 
   const rememberMailbox = (nextMailbox) => {
     localStorage.setItem(savedMailboxKey, nextMailbox.id);
@@ -537,6 +551,38 @@ export function App() {
             </article>
           </div>
         </section>
+      </section>
+
+      <section className="api-docs" id="api-docs">
+        <div className="api-docs-heading">
+          <div>
+            <p className="eyebrow">Developer API</p>
+            <h2>Dokumentasi API Lengkap</h2>
+          </div>
+          <code>{api.baseUrl}</code>
+        </div>
+
+        <div className="api-docs-grid">
+          {apiReference.map(([method, path, description]) => (
+            <article className="api-endpoint" key={`${method}-${path}`}>
+              <div>
+                <span className={`api-method method-${method.toLowerCase()}`}>{method}</span>
+                <code>{path}</code>
+              </div>
+              <p>{description}</p>
+            </article>
+          ))}
+        </div>
+
+        <div className="api-notes">
+          <strong>Response utama:</strong>
+          <span>Mailbox dikembalikan sebagai <code>{'{ mailbox }'}</code>, daftar email sebagai <code>{'{ emails }'}</code>, dan error sebagai <code>{'{ error }'}</code>.</span>
+        </div>
+
+        <div className="api-notes api-key-note">
+          <strong>API key:</strong>
+          <span>Untuk penggunaan API eksternal, sertakan header <code>x-api-key</code>. Dapatkan akses dari owner di <a href="https://t.me/yonkounoryu" target="_blank" rel="noreferrer">t.me/yonkounoryu</a>.</span>
+        </div>
       </section>
     </main>
   );
