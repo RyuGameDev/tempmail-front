@@ -28,6 +28,23 @@ const musicTracks = import.meta.glob('./assets/music/*.{mp3,ogg,wav}', {
 });
 const musicPlaylist = Object.values(musicTracks);
 
+function getMailboxAddressFromPath() {
+  const path = decodeURIComponent(window.location.pathname).replace(/^\/+|\/+$/g, '');
+  return path.includes('@') ? path : '';
+}
+
+function splitMailboxAddress(address) {
+  const atIndex = address.lastIndexOf('@');
+  if (atIndex <= 0 || atIndex === address.length - 1) {
+    return null;
+  }
+
+  return {
+    localPart: address.slice(0, atIndex),
+    domain: address.slice(atIndex + 1)
+  };
+}
+
 function getSavedMailboxHistory() {
   try {
     return JSON.parse(localStorage.getItem(savedMailboxHistoryKey) || '[]')
@@ -137,10 +154,24 @@ export function App() {
   }, [musicEnabled, musicStarted]);
 
   useEffect(() => {
+    const pathMailbox = splitMailboxAddress(getMailboxAddressFromPath());
+
     api.domains().then(({ domains }) => {
       setDomains(domains);
-      setSelectedDomain(domains[0]?.name || '');
+      setSelectedDomain(pathMailbox?.domain || domains[0]?.name || '');
     }).catch(() => setStatus(getErrorMessage(new Error('BACKEND_UNAVAILABLE'))));
+
+    if (pathMailbox) {
+      setCustomName(pathMailbox.localPart);
+      setLoadingAction('direct');
+      setStatus(`Membuka ${pathMailbox.localPart}@${pathMailbox.domain}...`);
+
+      api.customMailbox(pathMailbox.localPart, pathMailbox.domain)
+        .then(({ mailbox }) => loadMailboxEmails(mailbox, `${mailbox.address} dibuka`))
+        .catch((error) => setStatus(getErrorMessage(error)))
+        .finally(() => setLoadingAction(''));
+      return;
+    }
 
     const savedMailboxId = localStorage.getItem(savedMailboxKey);
     if (savedMailboxId) {
