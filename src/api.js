@@ -58,5 +58,20 @@ export const api = {
   deleteEmail: (mailboxId, emailId) =>
     request(`/api/mailboxes/${mailboxId}/emails/${emailId}`, {
       method: 'DELETE'
+    }),
+  adminGetTokens: (adminKey) =>
+    request('/api/admin/tokens', {
+      headers: { 'x-admin-key': adminKey }
+    }),
+  adminSaveToken: (adminKey, payload) =>
+    request('/api/admin/tokens', {
+      method: 'POST',
+      headers: { 'x-admin-key': adminKey },
+      body: JSON.stringify(payload)
+    }),
+  adminDeleteToken: (adminKey, token) =>
+    request(`/api/admin/tokens/${encodeURIComponent(token)}`, {
+      method: 'DELETE',
+      headers: { 'x-admin-key': adminKey }
     })
 };

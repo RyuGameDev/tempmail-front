@@ -25,6 +25,7 @@ import {
   X
 } from 'lucide-react';
 import { api } from './api.js';
+import { AdminPage } from './AdminPage.jsx';
 
 const savedMailboxKey = 'ryudev-temp-mailbox-id';
 const savedMailboxHistoryKey = 'ryudev-temp-mailbox-history';
@@ -101,6 +102,11 @@ const musicTracks = import.meta.glob('./assets/music/*.{mp3,ogg,wav}', {
 });
 const musicPlaylist = Object.values(musicTracks);
 
+function getInitialRoute() {
+  const path = decodeURIComponent(window.location.pathname).replace(/^\/+|\/+$/g, '').toLowerCase();
+  return path === 'admins' ? 'admins' : 'mail';
+}
+
 function getMailboxAddressFromPath() {
   const path = decodeURIComponent(window.location.pathname).replace(/^\/+|\/+$/g, '');
   return path.includes('@') ? path : '';
@@ -141,6 +147,7 @@ function getErrorMessage(error) {
 }
 
 export function App() {
+  const [currentRoute, setCurrentRoute] = useState(getInitialRoute);
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   const [domains, setDomains] = useState([]);
   const [selectedDomain, setSelectedDomain] = useState('');
@@ -181,6 +188,14 @@ export function App() {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentRoute(getInitialRoute());
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(savedMusicKey, String(musicEnabled));
@@ -706,6 +721,17 @@ export function App() {
       });
   };
 
+  if (currentRoute === 'admins') {
+    return (
+      <AdminPage
+        onBackToMail={() => {
+          window.history.pushState({}, '', '/');
+          setCurrentRoute('mail');
+        }}
+      />
+    );
+  }
+
   return (
     <main className="app-shell">
       <audio ref={audioRef} preload="none" />
@@ -1052,7 +1078,32 @@ export function App() {
             <p className="eyebrow">Developer API</p>
             <h2>Dokumentasi API Lengkap</h2>
           </div>
-          <code>{api.baseUrl}</code>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <a
+              href="/admins"
+              onClick={(e) => {
+                e.preventDefault();
+                window.history.pushState({}, '', '/admins');
+                setCurrentRoute('admins');
+              }}
+              style={{
+                fontSize: '0.8rem',
+                color: 'inherit',
+                opacity: 0.7,
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                border: '1px solid rgba(112, 128, 150, 0.2)'
+              }}
+              title="Portal Admin"
+            >
+              🔒 Portal Admin
+            </a>
+            <code>{api.baseUrl}</code>
+          </div>
         </div>
 
         <div className="api-docs-grid">
