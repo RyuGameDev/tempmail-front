@@ -368,6 +368,10 @@ input {
 }
 
 .section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   color: #435169;
   font-size: 0.88rem;
   font-weight: 800;

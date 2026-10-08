@@ -853,48 +853,31 @@ export function App() {
           </div>
 
           {mailboxHistory.length > 0 ? (
-            <div className="mailbox-history">
-              <div className="history-header">
-                <div className="history-title">
-                  <History size={16} />
-                  <span>Riwayat Alamat</span>
+            <div className="history-panel">
+              <div className="section-title">
+                <div>
+                  <History size={17} />
+                  <span>Riwayat alamat</span>
                 </div>
-                <button className="history-clear-button" onClick={clearHistory} type="button">
+                <button className="text-action" type="button" onClick={clearHistory}>
                   Bersihkan
                 </button>
               </div>
               <div className="history-list">
                 {mailboxHistory.map((item) => (
-                  <div
-                    className={`history-item ${mailbox?.id === item.id ? 'current' : ''}`}
-                    key={item.id}
-                    onClick={() => selectMailbox(item)}
-                  >
-                    <div className="history-item-main">
-                      <strong>{item.address}</strong>
-                      <small>{item.domain}</small>
-                    </div>
-                    <div className="history-item-actions">
-                      <button
-                        className="history-icon-button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          copyAddress(item.address);
-                        }}
-                        type="button"
-                        title="Copy alamat"
-                      >
-                        {copiedAddress === item.address ? <CheckCircle2 size={14} /> : <Copy size={14} />}
-                      </button>
-                      <button
-                        className="history-icon-button"
-                        onClick={(event) => removeHistoryItem(event, item.id)}
-                        type="button"
-                        title="Hapus riwayat"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
+                  <div className={`history-item ${item.id === mailbox?.id ? 'selected' : ''}`} key={item.id}>
+                    <button type="button" onClick={() => selectMailbox(item)} disabled={Boolean(loadingAction)}>
+                      <span>{item.address}</span>
+                      {loadingAction === `history:${item.id}` ? <LoaderCircle className="spin" size={16} /> : null}
+                    </button>
+                    <button
+                      className="history-delete"
+                      type="button"
+                      title="Hapus dari riwayat"
+                      onClick={(event) => removeHistoryItem(event, item.id)}
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 ))}
               </div>
