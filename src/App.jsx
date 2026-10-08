@@ -170,6 +170,57 @@ export function App() {
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [pricingSlide, setPricingSlide] = useState(0);
 
+  // Carousel touch swipe handling
+  const touchStartXRef = useRef(0);
+  const touchStartYRef = useRef(0);
+  const touchEndXRef = useRef(0);
+  const touchEndYRef = useRef(0);
+
+  const handleTouchStart = (e) => {
+    if (!e.touches || e.touches.length === 0) return;
+    touchStartXRef.current = e.touches[0].clientX;
+    touchStartYRef.current = e.touches[0].clientY;
+    touchEndXRef.current = e.touches[0].clientX;
+    touchEndYRef.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e) => {
+    if (!e.touches || e.touches.length === 0) return;
+    touchEndXRef.current = e.touches[0].clientX;
+    touchEndYRef.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = () => {
+    const deltaX = touchStartXRef.current - touchEndXRef.current;
+    const deltaY = touchStartYRef.current - touchEndYRef.current;
+
+    // Minimum swipe threshold 35px, and ensure horizontal swipe dominates vertical scrolling
+    if (Math.abs(deltaX) > 35 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
+      if (deltaX > 0) {
+        // Swiped left -> next slide
+        setPricingSlide((prev) => (prev < pricingPackages.length - 1 ? prev + 1 : 0));
+      } else {
+        // Swiped right -> prev slide
+        setPricingSlide((prev) => (prev > 0 ? prev - 1 : pricingPackages.length - 1));
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (!showPricingModal) return;
+    const handleModalKeyDown = (e) => {
+      if (e.key === 'ArrowLeft') {
+        setPricingSlide((prev) => (prev > 0 ? prev - 1 : pricingPackages.length - 1));
+      } else if (e.key === 'ArrowRight') {
+        setPricingSlide((prev) => (prev < pricingPackages.length - 1 ? prev + 1 : 0));
+      } else if (e.key === 'Escape') {
+        setShowPricingModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleModalKeyDown);
+    return () => window.removeEventListener('keydown', handleModalKeyDown);
+  }, [showPricingModal]);
+
   const isVip = Boolean(isVipToken || tokenInfo?.isUnlimited);
 
   const playRandomTrack = () => {
@@ -992,9 +1043,14 @@ export function App() {
               </button>
             </div>
 
-            <div className="carousel-wrapper">
+            <div
+              className="carousel-wrapper"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
               <button
-                className="carousel-arrow prev"
+                className="carousel-arrow prev desktop-arrow"
                 onClick={() => setPricingSlide((prev) => (prev > 0 ? prev - 1 : pricingPackages.length - 1))}
                 type="button"
                 aria-label="Previous slide"
@@ -1041,7 +1097,7 @@ export function App() {
               </div>
 
               <button
-                className="carousel-arrow next"
+                className="carousel-arrow next desktop-arrow"
                 onClick={() => setPricingSlide((prev) => (prev < pricingPackages.length - 1 ? prev + 1 : 0))}
                 type="button"
                 aria-label="Next slide"
@@ -1050,16 +1106,40 @@ export function App() {
               </button>
             </div>
 
-            <div className="carousel-dots">
-              {pricingPackages.map((_, idx) => (
-                <button
-                  key={idx}
-                  className={`carousel-dot ${idx === pricingSlide ? 'active' : ''}`}
-                  onClick={() => setPricingSlide(idx)}
-                  type="button"
-                  aria-label={`Slide ${idx + 1}`}
-                />
-              ))}
+            <div className="carousel-nav-footer">
+              <button
+                className="carousel-nav-btn prev mobile-nav-btn"
+                onClick={() => setPricingSlide((prev) => (prev > 0 ? prev - 1 : pricingPackages.length - 1))}
+                type="button"
+                aria-label="Previous slide"
+              >
+                <ChevronLeft size={18} />
+              </button>
+
+              <div className="carousel-dots">
+                {pricingPackages.map((_, idx) => (
+                  <button
+                    key={idx}
+                    className={`carousel-dot ${idx === pricingSlide ? 'active' : ''}`}
+                    onClick={() => setPricingSlide(idx)}
+                    type="button"
+                    aria-label={`Slide ${idx + 1}`}
+                  />
+                ))}
+              </div>
+
+              <button
+                className="carousel-nav-btn next mobile-nav-btn"
+                onClick={() => setPricingSlide((prev) => (prev < pricingPackages.length - 1 ? prev + 1 : 0))}
+                type="button"
+                aria-label="Next slide"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+
+            <div className="carousel-mobile-hint">
+              <span>👈 Geser kartu untuk paket lain 👉</span>
             </div>
 
             <div className="pricing-modal-footer">
@@ -1078,32 +1158,7 @@ export function App() {
             <p className="eyebrow">Developer API</p>
             <h2>Dokumentasi API Lengkap</h2>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <a
-              href="/admins"
-              onClick={(e) => {
-                e.preventDefault();
-                window.history.pushState({}, '', '/admins');
-                setCurrentRoute('admins');
-              }}
-              style={{
-                fontSize: '0.8rem',
-                color: 'inherit',
-                opacity: 0.7,
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '4px 8px',
-                borderRadius: '6px',
-                border: '1px solid rgba(112, 128, 150, 0.2)'
-              }}
-              title="Portal Admin"
-            >
-              🔒 Portal Admin
-            </a>
-            <code>{api.baseUrl}</code>
-          </div>
+          <code>{api.baseUrl}</code>
         </div>
 
         <div className="api-docs-grid">

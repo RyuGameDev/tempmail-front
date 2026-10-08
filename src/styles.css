@@ -1009,12 +1009,13 @@ input {
   position: relative;
   width: 100%;
   max-width: 480px;
+  max-height: 92vh;
+  overflow-y: auto;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: #ffffff;
   color: #0f172a;
   box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35);
-  overflow: hidden;
   animation: scaleUpModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -1275,12 +1276,64 @@ input {
   background: linear-gradient(135deg, #1d8cc2 0%, #0077b3 100%);
 }
 
+.carousel-nav-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 0 4px;
+}
+
+.carousel-nav-btn {
+  display: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(112, 128, 150, 0.25);
+  background: rgba(255, 255, 255, 0.95);
+  color: #334155;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+:root[data-theme="dark"] .carousel-nav-btn {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(30, 41, 59, 0.95);
+  color: #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.carousel-nav-btn:hover {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+
+.carousel-mobile-hint {
+  display: none;
+  text-align: center;
+  padding: 0 0 6px;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+:root[data-theme="dark"] .carousel-mobile-hint {
+  color: #64748b;
+}
+
 .carousel-dots {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 12px 0 6px;
+  padding: 4px 0;
 }
 
 .carousel-dot {
@@ -1407,6 +1460,129 @@ input {
 
   .mail-layout:not(.has-reader) .mail-reader {
     display: none;
+  }
+
+  /* --- Pricing Modal Mobile Optimizations --- */
+  .pricing-modal-overlay {
+    padding: 10px;
+  }
+
+  .pricing-modal-dialog {
+    max-height: 94vh;
+    border-radius: 18px;
+  }
+
+  .pricing-modal-header {
+    padding: 14px 16px 8px;
+  }
+
+  .pricing-modal-header h2 {
+    font-size: 1.15rem;
+  }
+
+  .pricing-pill {
+    font-size: 0.68rem;
+    padding: 2px 8px;
+  }
+
+  .carousel-wrapper {
+    padding: 0;
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .carousel-arrow.desktop-arrow {
+    display: none;
+  }
+
+  .carousel-card-container {
+    padding: 0 4px;
+    width: 100%;
+  }
+
+  .pricing-card {
+    padding: 16px 14px;
+    border-radius: 14px;
+  }
+
+  .popular-badge {
+    top: -10px;
+    right: 12px;
+    font-size: 0.68rem;
+    padding: 2px 8px;
+  }
+
+  .package-tag {
+    font-size: 0.75rem;
+    margin-bottom: 2px;
+  }
+
+  .package-name {
+    font-size: 1.12rem;
+    margin-bottom: 8px;
+  }
+
+  .package-price {
+    font-size: 1.55rem;
+  }
+
+  .package-rate {
+    font-size: 0.76rem;
+  }
+
+  .package-price-wrap {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    gap: 6px;
+  }
+
+  .package-features {
+    gap: 7px;
+    margin-bottom: 14px;
+  }
+
+  .package-features li {
+    font-size: 0.8rem;
+    gap: 6px;
+    line-height: 1.35;
+  }
+
+  .feature-check {
+    width: 15px;
+    height: 15px;
+  }
+
+  .package-cta-group {
+    margin-top: 10px;
+  }
+
+  .buy-now-btn.telegram {
+    height: 40px;
+    font-size: 0.86rem;
+    border-radius: 10px;
+  }
+
+  .carousel-nav-btn.mobile-nav-btn {
+    display: inline-flex;
+  }
+
+  .carousel-nav-footer {
+    padding: 8px 0 4px;
+    gap: 16px;
+  }
+
+  .carousel-mobile-hint {
+    display: block;
+  }
+
+  .pricing-modal-footer {
+    padding: 10px 14px 14px;
+  }
+
+  .pricing-modal-footer p {
+    font-size: 0.72rem;
+    line-height: 1.4;
   }
 }
 
