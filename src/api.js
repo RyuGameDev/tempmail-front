@@ -11,7 +11,11 @@ async function request(path, options = {}) {
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(data.error || 'REQUEST_FAILED');
+    const error = new Error(data.message || data.error || 'REQUEST_FAILED');
+    error.code = data.error;
+    error.status = response.status;
+    error.data = data;
+    throw error;
   }
 
   return data;
@@ -20,14 +24,17 @@ async function request(path, options = {}) {
 export const api = {
   baseUrl: API_URL,
   domains: () => request('/api/domains'),
-  randomMailbox: (domain) =>
+  checkToken: (token) => request(`/api/tokens/check?token=${encodeURIComponent(token)}`),
+  randomMailbox: (domain, token) =>
     request('/api/mailboxes/random', {
       method: 'POST',
+      headers: token ? { 'x-api-key': token } : {},
       body: JSON.stringify({ domain })
     }),
-  customMailbox: (localPart, domain) =>
+  customMailbox: (localPart, domain, token) =>
     request('/api/mailboxes/custom', {
       method: 'POST',
+      headers: token ? { 'x-api-key': token } : {},
       body: JSON.stringify({ localPart, domain })
     }),
   mailbox: (id) => request(`/api/mailboxes/${id}`),
