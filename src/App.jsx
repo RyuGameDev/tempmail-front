@@ -7,6 +7,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Copy,
+  Eye,
+  EyeOff,
   History,
   Inbox,
   Key,
@@ -146,6 +148,18 @@ function getErrorMessage(error) {
   return messages[message] || message;
 }
 
+function formatTokenHint(rawToken) {
+  if (!rawToken) return 'token kamu';
+  const t = rawToken.trim();
+  if (t.length <= 4) {
+    return '••••';
+  }
+  if (t.length <= 8) {
+    return `${t.slice(0, 2)}••••${t.slice(-2)}`;
+  }
+  return `${t.slice(0, 3)}••••••${t.slice(-3)}`;
+}
+
 export function App() {
   const [currentRoute, setCurrentRoute] = useState(getInitialRoute);
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
@@ -167,6 +181,7 @@ export function App() {
   const [token, setToken] = useState(() => localStorage.getItem(savedTokenKey) || '');
   const [isVipToken, setIsVipToken] = useState(() => localStorage.getItem(savedTokenVipKey) === 'true');
   const [tokenInfo, setTokenInfo] = useState(null);
+  const [showFullToken, setShowFullToken] = useState(false);
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [pricingSlide, setPricingSlide] = useState(0);
 
@@ -344,13 +359,21 @@ export function App() {
     }).catch(() => setStatus(getErrorMessage(new Error('BACKEND_UNAVAILABLE'))));
 
     if (pathMailbox) {
+      const fullAddress = `${pathMailbox.localPart}@${pathMailbox.domain}`;
       setCustomName(pathMailbox.localPart);
       setLoadingAction('direct');
-      setStatus(`Membuka ${pathMailbox.localPart}@${pathMailbox.domain}...`);
+      setStatus(`Membuka ${fullAddress}...`);
 
-      api.customMailbox(pathMailbox.localPart, pathMailbox.domain, token)
+      // Coba buka mailbox yang sudah ada secara langsung (tanpa perlu token publik)
+      api.mailboxByAddress(fullAddress)
         .then(({ mailbox: mb }) => loadMailboxEmails(mb, `${mb.address} dibuka`))
-        .catch((error) => setStatus(getErrorMessage(error)))
+        .catch((error) => {
+          if (error.code === 'MAILBOX_NOT_FOUND' || error.status === 404) {
+            setStatus(`Alamat ${fullAddress} belum dibuat. Klik 'Gunakan / Buat' jika ingin membuatnya.`);
+          } else {
+            setStatus(getErrorMessage(error));
+          }
+        })
         .finally(() => setLoadingAction(''));
       return;
     }
@@ -430,7 +453,10 @@ export function App() {
   }, [mailbox?.id]);
 
   const unreadCount = useMemo(() => emails.filter((email) => !email.readAt).length, [emails]);
-  const displayTokenInDocs = useMemo(() => (!token || isVip ? 'token kamu' : token), [token, isVip]);
+  const displayTokenInDocs = useMemo(() => {
+    if (!token || isVip) return 'token kamu';
+    return showFullToken ? token : formatTokenHint(token);
+  }, [token, isVip, showFullToken]);
 
   const apiReference = [
     ['GET', '/api/health', 'Cek status backend.'],
@@ -664,19 +690,39 @@ export function App() {
 
   const createCustom = async (event) => {
     event.preventDefault();
-    if (!customName.trim()) {
+    const cleanName = customName.trim().toLowerCase();
+    if (!cleanName) {
       setStatus('Isi nama depan email dulu');
       return;
     }
 
-    const activeToken = await ensureTokenBeforeAction();
-    if (!activeToken) return;
-
+    const fullAddress = `${cleanName}@${selectedDomain}`;
     setLoadingAction('custom');
-    setStatus('Membuka atau membuat alamat custom...');
+    setStatus(`Mengecek ${fullAddress}...`);
+
+    // 1. Cek apakah alamat sudah ada di database (buka langsung tanpa token / tanpa kurangi kuota)
+    try {
+      const existing = await api.mailboxByAddress(fullAddress);
+      if (existing?.mailbox) {
+        await loadMailboxEmails(existing.mailbox, `${existing.mailbox.address} dibuka (Alamat sudah ada)`);
+        setLoadingAction('');
+        return;
+      }
+    } catch {
+      // Alamat belum ada, lanjut ke proses pembuatan baru
+    }
+
+    // 2. Alamat belum pernah dibuat -> Memerlukan token untuk pembuatan baru (kurangi 1 kuota)
+    const activeToken = await ensureTokenBeforeAction();
+    if (!activeToken) {
+      setLoadingAction('');
+      return;
+    }
+
+    setStatus('Membuat alamat custom baru...');
 
     try {
-      const res = await api.customMailbox(customName, selectedDomain, activeToken);
+      const res = await api.customMailbox(cleanName, selectedDomain, activeToken);
       if (res.token?.remainingQuota !== undefined) {
         setTokenInfo((prev) => (prev ? { ...prev, quota: res.token.remainingQuota } : null));
       }
@@ -838,13 +884,28 @@ export function App() {
             {token ? (
               <div className="token-status-body">
                 <div className="token-status-row">
-                  <code className="token-code-text" title={isVip ? 'VIP Unlimited' : token}>
-                    {isVip
-                      ? 'VIP-PASS (Aktif)'
-                      : token.length > 15
-                      ? `${token.slice(0, 6)}...${token.slice(-4)}`
-                      : token}
-                  </code>
+                  <div className="token-code-wrapper">
+                    <code
+                      className="token-code-text"
+                      title={isVip ? 'VIP Unlimited' : (showFullToken ? token : 'Klik ikon mata untuk mengintip token')}
+                    >
+                      {isVip
+                        ? 'VIP-PASS (Aktif)'
+                        : showFullToken
+                        ? token
+                        : formatTokenHint(token)}
+                    </code>
+                    {!isVip && (
+                      <button
+                        className="token-eye-btn"
+                        type="button"
+                        onClick={() => setShowFullToken((prev) => !prev)}
+                        title={showFullToken ? 'Sembunyikan token' : 'Lihat token'}
+                      >
+                        {showFullToken ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                    )}
+                  </div>
                   <span className={`token-quota-pill ${isVip ? 'vip' : ''}`}>
                     {isVip ? 'VIP Unlimited' : tokenInfo?.quota !== undefined ? `${tokenInfo.quota} email` : 'Tersimpan'}
                   </span>
