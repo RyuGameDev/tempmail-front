@@ -619,6 +619,16 @@ input {
   font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
 }
 
+.reader-body pre a {
+  color: #2563eb;
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+:root[data-theme="dark"] .reader-body pre a {
+  color: #60a5fa;
+}
+
 .api-docs {
   max-width: 1360px;
   margin: 18px auto 0;

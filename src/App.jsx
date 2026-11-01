@@ -160,6 +160,63 @@ function formatTokenHint(rawToken) {
   return `${t.slice(0, 3)}••••••${t.slice(-3)}`;
 }
 
+function formatEmailHtml(rawHtml) {
+  if (!rawHtml) return '';
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(rawHtml, 'text/html');
+
+    // 1. Tambahkan <base target="_blank"> agar semua link default buka di tab baru
+    let base = doc.querySelector('base');
+    if (!base) {
+      base = doc.createElement('base');
+      if (doc.head) {
+        doc.head.insertBefore(base, doc.head.firstChild);
+      } else {
+        doc.documentElement.insertBefore(base, doc.documentElement.firstChild);
+      }
+    }
+    base.setAttribute('target', '_blank');
+
+    // 2. Pastikan semua tag <a> memiliki target="_blank" dan rel="noopener noreferrer"
+    const links = doc.querySelectorAll('a');
+    links.forEach((link) => {
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener noreferrer');
+    });
+
+    // 3. Pastikan tag <form> juga submit ke tab baru
+    const forms = doc.querySelectorAll('form');
+    forms.forEach((form) => {
+      form.setAttribute('target', '_blank');
+    });
+
+    return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+  } catch {
+    // Fallback jika parser DOM gagal
+    if (/<head[^>]*>/i.test(rawHtml)) {
+      return rawHtml.replace(/<head[^>]*>/i, '$&<base target="_blank">');
+    }
+    return `<base target="_blank">\n${rawHtml}`;
+  }
+}
+
+function renderTextWithLinks(text) {
+  if (!text) return 'Email kosong.';
+  const urlRegex = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/g;
+  const parts = text.split(urlRegex);
+  return parts.map((part, index) => {
+    if (part.match(urlRegex)) {
+      return (
+        <a key={index} href={part} target="_blank" rel="noopener noreferrer">
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
+}
+
 export function App() {
   const [currentRoute, setCurrentRoute] = useState(getInitialRoute);
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
@@ -457,6 +514,11 @@ export function App() {
     if (!token || isVip) return 'token kamu';
     return showFullToken ? token : formatTokenHint(token);
   }, [token, isVip, showFullToken]);
+
+  const formattedHtmlBody = useMemo(() => {
+    if (!selectedEmail?.htmlBody) return '';
+    return formatEmailHtml(selectedEmail.htmlBody);
+  }, [selectedEmail?.htmlBody]);
 
   const apiReference = [
     ['GET', '/api/health', 'Cek status backend.'],
@@ -1072,10 +1134,14 @@ export function App() {
                     <p>To: {selectedEmail.toAddress}</p>
                   </div>
                   <div className="reader-body">
-                    {selectedEmail.htmlBody ? (
-                      <iframe title="email-body" srcDoc={selectedEmail.htmlBody} sandbox="" />
+                    {formattedHtmlBody ? (
+                      <iframe
+                        title="email-body"
+                        srcDoc={formattedHtmlBody}
+                        sandbox="allow-popups allow-popups-to-escape-sandbox allow-forms"
+                      />
                     ) : (
-                      <pre>{selectedEmail.textBody || 'Email kosong.'}</pre>
+                      <pre>{renderTextWithLinks(selectedEmail.textBody)}</pre>
                     )}
                   </div>
                 </>
