@@ -47,6 +47,7 @@ export function AdminPage({ onBackToMail }) {
   const [formQuota, setFormQuota] = useState(500);
   const [isUnlimited, setIsUnlimited] = useState(false);
   const [disallowedDomains, setDisallowedDomains] = useState([]);
+  const [formAllowGmailOriginal, setFormAllowGmailOriginal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -169,7 +170,8 @@ export function AdminPage({ onBackToMail }) {
       const res = await api.adminSaveToken(adminKey, {
         token: tokenVal,
         quota: quotaVal,
-        disallowedDomains: disallowedDomains
+        disallowedDomains: disallowedDomains,
+        allowGmailOriginal: formAllowGmailOriginal
       });
 
       if (res.ok) {
@@ -184,6 +186,7 @@ export function AdminPage({ onBackToMail }) {
         setFormQuota(500);
         setIsUnlimited(false);
         setDisallowedDomains([]);
+        setFormAllowGmailOriginal(false);
         await fetchTokens(adminKey);
       }
     } catch (err) {
@@ -195,6 +198,20 @@ export function AdminPage({ onBackToMail }) {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const startEditToken = (t) => {
+    setFormToken(t.token);
+    if (t.quota === -1) {
+      setIsUnlimited(true);
+      setFormQuota(500);
+    } else {
+      setIsUnlimited(false);
+      setFormQuota(t.quota);
+    }
+    setDisallowedDomains(t.disallowedDomains || []);
+    setFormAllowGmailOriginal(Boolean(t.allowGmailOriginal));
+    window.scrollTo({ top: 120, behavior: 'smooth' });
   };
 
   // Delete token
@@ -361,8 +378,8 @@ export function AdminPage({ onBackToMail }) {
               <div className="panel-heading">
                 <Plus size={20} />
                 <div>
-                  <h2>Buat / Update Token</h2>
-                  <p>Buat token baru atau ubah kuota token yang sudah ada</p>
+                  <h2>{formToken ? 'Edit Token' : 'Buat Token Baru'}</h2>
+                  <p>Atur nama token, kuota, izin Gmail asli, dan domain</p>
                 </div>
               </div>
 
@@ -378,66 +395,116 @@ export function AdminPage({ onBackToMail }) {
                   />
                 </label>
 
-                <div className="quota-control-group">
-                  <label className="field">
-                    Kuota Pembuatan Email
-                    <input
-                      type="number"
-                      value={formQuota}
-                      onChange={(e) => setFormQuota(e.target.value)}
-                      disabled={isUnlimited}
-                      min="1"
-                    />
-                  </label>
-                  <label className="checkbox-field">
-                    <input
-                      type="checkbox"
-                      checked={isUnlimited}
-                      onChange={(e) => setIsUnlimited(e.target.checked)}
-                    />
-                    <span>Unlimited (-1)</span>
-                  </label>
+                {/* Kuota Section */}
+                <div className="quota-control-wrapper">
+                  <div className="quota-input-row">
+                    <label className="field">
+                      Kuota Pembuatan Email
+                      <input
+                        type="number"
+                        value={formQuota}
+                        onChange={(e) => setFormQuota(e.target.value)}
+                        disabled={isUnlimited}
+                        min="1"
+                      />
+                    </label>
+                    <label className="checkbox-field unlimited-toggle">
+                      <input
+                        type="checkbox"
+                        checked={isUnlimited}
+                        onChange={(e) => setIsUnlimited(e.target.checked)}
+                      />
+                      <span>VIP Unlimited (-1)</span>
+                    </label>
+                  </div>
+
+                  <div className="quick-quota-tags">
+                    <button type="button" className={!isUnlimited && Number(formQuota) === 100 ? 'active' : ''} onClick={() => { setIsUnlimited(false); setFormQuota(100); }}>100</button>
+                    <button type="button" className={!isUnlimited && Number(formQuota) === 500 ? 'active' : ''} onClick={() => { setIsUnlimited(false); setFormQuota(500); }}>500</button>
+                    <button type="button" className={!isUnlimited && Number(formQuota) === 1000 ? 'active' : ''} onClick={() => { setIsUnlimited(false); setFormQuota(1000); }}>1.000</button>
+                    <button type="button" className={isUnlimited ? 'active' : ''} onClick={() => { setIsUnlimited(true); }}>VIP Unlimited</button>
+                  </div>
                 </div>
 
-                <div className="quick-quota-tags">
-                  <button type="button" onClick={() => { setIsUnlimited(false); setFormQuota(100); }}>100</button>
-                  <button type="button" onClick={() => { setIsUnlimited(false); setFormQuota(500); }}>500</button>
-                  <button type="button" onClick={() => { setIsUnlimited(false); setFormQuota(1000); }}>1.000</button>
-                  <button type="button" onClick={() => { setIsUnlimited(true); }}>VIP Unlimited</button>
+                {/* CENTANG IZIN AKSES GMAIL ASLI */}
+                <div className={`permission-toggle-box ${formAllowGmailOriginal ? 'enabled' : ''}`}>
+                  <label className="permission-toggle-label">
+                    <input
+                      type="checkbox"
+                      checked={formAllowGmailOriginal}
+                      onChange={(e) => setFormAllowGmailOriginal(e.target.checked)}
+                    />
+                    <div className="permission-toggle-info">
+                      <div className="permission-title-row">
+                        <Mail size={16} />
+                        <strong>Centang Izin Akses Gmail Asli</strong>
+                        <span className={`status-pill ${formAllowGmailOriginal ? 'active' : 'inactive'}`}>
+                          {formAllowGmailOriginal ? 'Diizinkan' : 'Dilarang'}
+                        </span>
+                      </div>
+                      <p>
+                        {formAllowGmailOriginal
+                          ? '✓ Token ini berhak membuka inbox akun Gmail asli di tab Gmail.'
+                          : '🚫 Centang untuk memberi izin token ini membuka inbox Gmail asli.'}
+                      </p>
+                    </div>
+                  </label>
                 </div>
 
                 {/* Domain Restrictions */}
                 <div className="domain-restriction-section">
                   <div className="restriction-header">
-                    <span>Domain yang Dilarang (Disallowed):</span>
+                    <span>Batasan Domain Temp Mail:</span>
                     <div className="preset-links">
                       <button type="button" onClick={applyPresetCloudOnly}>Larang .site & .id</button>
                       <button type="button" onClick={applyPresetAllowAll}>Bebaskan Semua</button>
                     </div>
                   </div>
 
-                  <div className="domain-checkbox-list">
+                  <div className="domain-chip-grid">
                     {domains.map((dom) => {
                       const isDisallowed = disallowedDomains.includes(dom.name.toLowerCase());
                       return (
-                        <label key={dom.name} className={`domain-chip ${isDisallowed ? 'blocked' : 'allowed'}`}>
-                          <input
-                            type="checkbox"
-                            checked={isDisallowed}
-                            onChange={() => toggleDomain(dom.name)}
-                          />
-                          <span>@{dom.name}</span>
-                          <small>{isDisallowed ? '🚫 Dilarang' : '✓ Boleh'}</small>
-                        </label>
+                        <button
+                          key={dom.name}
+                          type="button"
+                          className={`domain-pill ${isDisallowed ? 'blocked' : 'allowed'}`}
+                          onClick={() => toggleDomain(dom.name)}
+                        >
+                          <span className="domain-pill-status">
+                            {isDisallowed ? '✕' : '✓'}
+                          </span>
+                          <span className="domain-pill-name">@{dom.name}</span>
+                          <small className="domain-pill-label">
+                            {isDisallowed ? 'Dilarang' : 'Boleh'}
+                          </small>
+                        </button>
                       );
                     })}
                   </div>
                 </div>
 
-                <button className="primary-action" type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? <LoaderCircle className="spin" size={18} /> : <CheckCircle2 size={18} />}
-                  <span>{isSubmitting ? 'Menyimpan...' : 'Simpan & Aktifkan Token'}</span>
-                </button>
+                <div className="form-actions-row">
+                  <button className="primary-action" type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? <LoaderCircle className="spin" size={18} /> : <CheckCircle2 size={18} />}
+                    <span>{isSubmitting ? 'Menyimpan...' : formToken ? 'Simpan Perubahan' : 'Simpan & Aktifkan Token'}</span>
+                  </button>
+                  {formToken && (
+                    <button
+                      className="secondary-action"
+                      type="button"
+                      onClick={() => {
+                        setFormToken('');
+                        setFormQuota(500);
+                        setIsUnlimited(false);
+                        setDisallowedDomains([]);
+                        setFormAllowGmailOriginal(false);
+                      }}
+                    >
+                      Batal Edit
+                    </button>
+                  )}
+                </div>
               </form>
             </div>
 
@@ -445,8 +512,11 @@ export function AdminPage({ onBackToMail }) {
             <div className="admin-list-panel">
               <div className="panel-heading list-header">
                 <div className="list-title-wrap">
-                  <h2>Daftar Token Terdaftar</h2>
-                  <p>{tokens.length} token aktif di database D1</p>
+                  <div className="title-with-badge">
+                    <h2>Daftar Token Terdaftar</h2>
+                    <span className="counter-badge">{tokens.length}</span>
+                  </div>
+                  <p>Token aktif yang tersimpan di database D1</p>
                 </div>
                 <div className="list-actions">
                   <input
@@ -478,8 +548,8 @@ export function AdminPage({ onBackToMail }) {
                   <div className="tokens-card-list">
                     {filteredTokens.map((t) => (
                       <div key={t.token} className="token-admin-row">
-                        <div className="token-row-main">
-                          <div className="token-row-name-wrap">
+                        <div className="token-row-header">
+                          <div className="token-name-group">
                             <strong className="token-row-name">{t.token}</strong>
                             <button
                               className="mini-copy-btn"
@@ -490,42 +560,59 @@ export function AdminPage({ onBackToMail }) {
                               {copiedToken === t.token ? <CheckCircle2 size={14} className="text-success" /> : <Copy size={14} />}
                             </button>
                           </div>
+                          <div className="token-row-actions">
+                            <button
+                              className="token-action-btn edit"
+                              onClick={() => startEditToken(t)}
+                              type="button"
+                              title="Edit token ini"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="token-delete-btn"
+                              onClick={() => handleDeleteToken(t.token)}
+                              type="button"
+                              title="Hapus token"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="token-badges-row">
+                          <span className={`token-quota-pill ${t.quota === -1 ? 'vip' : t.quota === 0 ? 'exhausted' : ''}`}>
+                            {t.quota === -1 ? 'VIP Unlimited' : `${t.quota} email tersisa`}
+                          </span>
+
+                          {t.allowGmailOriginal ? (
+                            <span className="token-permission-badge allowed" title="Token ini boleh akses Gmail asli">
+                              <ShieldCheck size={13} />
+                              <span>Gmail Asli: Boleh</span>
+                            </span>
+                          ) : (
+                            <span className="token-permission-badge blocked" title="Token ini dilarang akses Gmail asli">
+                              <Lock size={13} />
+                              <span>Gmail Asli: Dilarang</span>
+                            </span>
+                          )}
+
+                          {t.disallowedDomains?.length > 0 ? (
+                            <span className="token-disallowed-tag" title="Domain yang dilarang">
+                              <ShieldAlert size={12} />
+                              <span>Dilarang: {t.disallowedDomains.map((d) => '@' + d).join(', ')}</span>
+                            </span>
+                          ) : (
+                            <span className="token-allowed-all-tag">
+                              ✓ Semua Domain Temp Mail
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="token-row-footer">
                           <span className="token-row-date">
                             Dibuat: {t.createdAt ? new Date(t.createdAt).toLocaleDateString('id-ID') : '-'}
                           </span>
-                        </div>
-
-                        <div className="token-row-details">
-                          <div className="token-row-quota">
-                            <span className="detail-label">Sisa Kuota:</span>
-                            <span className={`token-quota-pill ${t.quota === -1 ? 'vip' : t.quota === 0 ? 'exhausted' : ''}`}>
-                              {t.quota === -1 ? 'VIP Unlimited' : `${t.quota} email`}
-                            </span>
-                          </div>
-
-                          <div className="token-row-restrictions">
-                            {t.disallowedDomains?.length > 0 ? (
-                              <span className="token-disallowed-tag" title="Domain yang dilarang">
-                                <ShieldAlert size={12} />
-                                <span>Dilarang: {t.disallowedDomains.map((d) => '@' + d).join(', ')}</span>
-                              </span>
-                            ) : (
-                              <span className="token-allowed-all-tag">
-                                ✓ Semua domain bisa
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="token-row-actions">
-                          <button
-                            className="token-delete-btn"
-                            onClick={() => handleDeleteToken(t.token)}
-                            type="button"
-                            title="Hapus token"
-                          >
-                            <Trash2 size={16} />
-                          </button>
                         </div>
                       </div>
                     ))}

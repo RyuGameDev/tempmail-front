@@ -4,6 +4,7 @@ import {
   Copy,
   History,
   Inbox,
+  Key,
   LoaderCircle,
   Lock,
   Mail,
@@ -201,7 +202,7 @@ export function GmailPage({ token, onInputToken, onAliasCreated }) {
           </button>
         </> : <form className="gmail-form" onSubmit={unlock}>
           <label className="field">
-            Password / API key khusus Gmail
+            Token Akses / Password Gmail Asli
             <input
               type="password"
               value={password}
@@ -209,9 +210,18 @@ export function GmailPage({ token, onInputToken, onAliasCreated }) {
               required
               maxLength={256}
               autoComplete="off"
-              placeholder="Kunci akses khusus dari admin"
+              placeholder="Masukkan token akses yang diberi izin admin"
             />
           </label>
+          {token && !password && (
+            <button
+              type="button"
+              className="token-btn-secondary"
+              onClick={() => setPassword(token)}
+            >
+              <Key size={14} /> Gunakan token tersimpan ({token.slice(0, 8)}...)
+            </button>
+          )}
           <button className="primary-action" disabled={!accountId || busy || !password} type="submit">
             {busy ? <LoaderCircle className="spin" size={18} /> : <Lock size={18} />} Buka Gmail asli
           </button>
