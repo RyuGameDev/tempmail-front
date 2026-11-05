@@ -6,6 +6,44 @@
   text-rendering: optimizeLegibility;
 }
 
+.mail-tabs { display: flex; flex-wrap: wrap; gap: 8px; max-width: 1360px; margin: 0 auto 20px; }
+.mail-tabs button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 22px; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff; color: #475569; font-weight: 600; }
+.mail-tabs button[aria-pressed="true"] { background: #2467d3; color: #fff; border-color: #2467d3; }
+.mail-tabs button:focus-visible { outline: 3px solid #60a5fa; outline-offset: 3px; }
+.gmail-view { max-width: 1360px; margin: auto; }
+.gmail-subtabs button { padding: 10px 16px; }
+.gmail-controls, .gmail-form { display: flex; flex-direction: column; gap: 16px; }
+.gmail-controls .panel-heading { margin-bottom: 0; }
+.gmail-hint { font-size: .85rem; line-height: 1.6; color: #64748b; margin: 12px 0; }
+.gmail-hint a { color: #2467d3; }
+.gmail-notice { display: flex; align-items: center; gap: 8px; padding: 14px 18px; background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; border-radius: 8px; margin-bottom: 18px; overflow-wrap: anywhere; }
+.gmail-notice.error { background: #fff1f2; border-color: #fecdd3; color: #9f1239; }
+.gmail-account-list { display: flex; flex-direction: column; gap: 12px; }
+.gmail-account-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px; border: 1px solid #cbd5e1; border-radius: 8px; overflow-wrap: anywhere; }
+.gmail-account-card p { margin: 6px 0 12px; color: #64748b; }
+.gmail-account-actions, .gmail-pagination { display: flex; flex-wrap: wrap; gap: 8px; }
+.gmail-pagination { padding: 16px; }
+.gmail-reader-back { margin: 12px; }
+.gmail-view .mail-reader { display: flex; flex-direction: column; }
+.gmail-view .reader-body, .gmail-view .reader-placeholder { flex: 1; }
+.gmail-form { margin-bottom: 20px; }
+.gmail-view .current-address strong { overflow-wrap: anywhere; }
+.gmail-view .reader-body iframe { width: 100%; min-height: 450px; border: 0; background: white; }
+.gmail-view .reader-body pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+:root[data-theme="dark"] .mail-tabs button { background: #172033; border-color: #344256; color: #cbd5e1; }
+:root[data-theme="dark"] .mail-tabs button[aria-pressed="true"] { background: #2467d3; color: white; }
+:root[data-theme="dark"] .gmail-hint, :root[data-theme="dark"] .gmail-account-card p { color: #a8b8ce; }
+:root[data-theme="dark"] .gmail-hint a { color: #93c5fd; }
+:root[data-theme="dark"] .gmail-account-card { border-color: #344256; }
+:root[data-theme="dark"] .gmail-notice { background: #11372e; color: #a7f3d0; border-color: #286052; }
+:root[data-theme="dark"] .gmail-notice.error { background: #431c2a; color: #fecdd3; border-color: #7f334e; }
+@media (max-width: 640px) {
+  .mail-tabs button { flex: 1; padding: 12px; }
+  .gmail-account-card { align-items: flex-start; flex-direction: column; }
+  .gmail-account-actions { width: 100%; }
+  .gmail-account-actions button { flex: 1; }
+}
+
 :root[data-theme="dark"] {
   color: #eef3fb;
   background: #0d1118;

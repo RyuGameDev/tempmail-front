@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { api } from './api.js';
 import { AdminPage } from './AdminPage.jsx';
+import { GmailPage } from './GmailPage.jsx';
 
 const savedMailboxKey = 'ryudev-temp-mailbox-id';
 const savedMailboxHistoryKey = 'ryudev-temp-mailbox-history';
@@ -218,6 +219,7 @@ function renderTextWithLinks(text) {
 }
 
 export function App() {
+  const [mailTab, setMailTab] = useState('tempmail');
   const [currentRoute, setCurrentRoute] = useState(getInitialRoute);
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   const [domains, setDomains] = useState([]);
@@ -909,7 +911,7 @@ export function App() {
       <header className="topbar">
         <div>
           <p className="eyebrow">Ryudev Mail Gateway</p>
-          <h1>Temporary Mail</h1>
+          <h1>{mailTab === 'gmail' ? 'Gmail Inbox' : 'Temporary Mail'}</h1>
         </div>
         <div className="topbar-actions">
           <button className="buy-token-header-btn" onClick={() => setShowPricingModal(true)} type="button">
@@ -922,7 +924,11 @@ export function App() {
         </div>
       </header>
 
-      <section className="workspace">
+      <nav className="mail-tabs" aria-label="Jenis inbox">
+        <button type="button" aria-pressed={mailTab === 'tempmail'} onClick={() => setMailTab('tempmail')}><Mail size={18} /> Temp Mail</button>
+        <button type="button" aria-pressed={mailTab === 'gmail'} onClick={() => setMailTab('gmail')}><Inbox size={18} /> Gmail</button>
+      </nav>
+      {mailTab === 'gmail' ? <GmailPage token={token} onInputToken={() => promptInputToken()} onAliasCreated={() => refreshUserToken()} /> : <section className="workspace">
         <aside className="control-panel">
           <div className="panel-heading">
             <Mail size={22} />
@@ -1156,6 +1162,7 @@ export function App() {
         </section>
       </section>
 
+      }
       {/* Pricing Carousel Modal */}
       {showPricingModal && (
         <div className="pricing-modal-overlay" onClick={() => setShowPricingModal(false)}>

@@ -20,10 +20,13 @@ import {
   Trash2
 } from 'lucide-react';
 import { api } from './api.js';
+import { AdminGmail } from './AdminGmail.jsx';
+import { gmailError } from './gmail-errors.js';
 
 const ADMIN_STORAGE_KEY = 'ryudev_admin_portal_key';
 
 export function AdminPage({ onBackToMail }) {
+  const [adminTab, setAdminTab] = useState('gmail');
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   const [adminKey, setAdminKey] = useState(() => sessionStorage.getItem(ADMIN_STORAGE_KEY) || '');
   const [keyInput, setKeyInput] = useState('');
@@ -83,10 +86,10 @@ export function AdminPage({ onBackToMail }) {
   };
 
   useEffect(() => {
-    if (adminKey) {
+    if (adminKey && adminTab === 'tokens') {
       fetchTokens(adminKey);
     }
-  }, [adminKey]);
+  }, [adminKey, adminTab]);
 
   // Handle Login
   const handleLogin = async (e) => {
@@ -101,11 +104,10 @@ export function AdminPage({ onBackToMail }) {
     setLoginError('');
 
     try {
-      const res = await api.adminGetTokens(key);
+      const res = await api.adminSession(key);
       if (res.ok) {
         sessionStorage.setItem(ADMIN_STORAGE_KEY, key);
         setAdminKey(key);
-        setTokens(res.tokens || []);
         setKeyInput('');
         Swal.fire({
           icon: 'success',
@@ -118,7 +120,7 @@ export function AdminPage({ onBackToMail }) {
     } catch (err) {
       setLoginError(err.message === 'Admin API Key tidak valid' || err.status === 401
         ? 'Admin Key salah! Pastikan memasukkan key yang benar.'
-        : `Gagal terhubung ke backend: ${err.message}`);
+        : `Gagal terhubung ke backend: ${gmailError(err)}`);
     } finally {
       setIsVerifying(false);
     }
@@ -277,7 +279,7 @@ export function AdminPage({ onBackToMail }) {
                 <Lock size={28} />
               </div>
               <h2>Login Admin Gateway</h2>
-              <p>Masukkan Secret Key Admin untuk mengakses panel pengelolaan token.</p>
+              <p>Masukkan Secret Key Admin untuk mengelola token dan akun Gmail.</p>
             </div>
 
             {loginError && <div className="admin-error-box">{loginError}</div>}
@@ -314,6 +316,11 @@ export function AdminPage({ onBackToMail }) {
       ) : (
         /* Authenticated Dashboard */
         <section className="admin-dashboard">
+          <nav className="mail-tabs" aria-label="Pengaturan admin">
+            <button type="button" aria-pressed={adminTab === 'tokens'} onClick={() => setAdminTab('tokens')}>Token Temp Mail</button>
+            <button type="button" aria-pressed={adminTab === 'gmail'} onClick={() => setAdminTab('gmail')}>Akun Gmail</button>
+          </nav>
+          {adminTab === 'gmail' ? <AdminGmail adminKey={adminKey} /> : <>
           {/* Summary Cards */}
           <div className="admin-stats-grid">
             <div className="stat-card">
@@ -526,6 +533,7 @@ export function AdminPage({ onBackToMail }) {
               </div>
             </div>
           </div>
+          </>}
         </section>
       )}
     </div>
