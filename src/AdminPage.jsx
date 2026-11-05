@@ -11,6 +11,7 @@ import {
   LoaderCircle,
   Lock,
   LogOut,
+  Mail,
   Moon,
   Plus,
   RefreshCw,
@@ -316,9 +317,9 @@ export function AdminPage({ onBackToMail }) {
       ) : (
         /* Authenticated Dashboard */
         <section className="admin-dashboard">
-          <nav className="mail-tabs" aria-label="Pengaturan admin">
-            <button type="button" aria-pressed={adminTab === 'tokens'} onClick={() => setAdminTab('tokens')}>Token Temp Mail</button>
-            <button type="button" aria-pressed={adminTab === 'gmail'} onClick={() => setAdminTab('gmail')}>Akun Gmail</button>
+          <nav className="mail-tabs admin-nav-tabs" aria-label="Pengaturan admin">
+            <button type="button" aria-pressed={adminTab === 'tokens'} onClick={() => setAdminTab('tokens')}><Key size={17} /> Token Temp Mail</button>
+            <button type="button" aria-pressed={adminTab === 'gmail'} onClick={() => setAdminTab('gmail')}><Mail size={17} /> Akun Gmail</button>
           </nav>
           {adminTab === 'gmail' ? <AdminGmail adminKey={adminKey} /> : <>
           {/* Summary Cards */}

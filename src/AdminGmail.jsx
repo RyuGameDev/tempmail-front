@@ -61,7 +61,45 @@ export function AdminGmail({ adminKey }) {
       <div className="admin-list-panel">
         <div className="panel-heading list-header"><div><h2>Akun Gmail</h2><p>{accounts.length} akun terdaftar</p></div><button type="button" className="icon-button" title="Muat ulang akun" disabled={loading || busy} onClick={load}><RefreshCw size={18} className={loading ? 'spin' : ''} /></button></div>
         {!accounts.length && <div className="admin-empty-tokens"><Mail size={36} /><p>{loading ? 'Memuat akun...' : 'Tambahkan akun Gmail pertama di form ini.'}</p></div>}
-        <div className="gmail-account-list">{accounts.map((account) => <div key={account.id} className="gmail-account-card"><div><strong>{account.label}</strong><p>{account.address}</p><span className={`status-pill ${account.active ? 'active' : 'inactive'}`}>{account.active ? 'Aktif' : 'Nonaktif'}</span></div><div className="gmail-account-actions"><button className="token-btn-secondary" disabled={busy} type="button" onClick={() => { setEditing(account); setForm({ ...empty, label: account.label, address: account.address }); setGeneratedKey(false); setError(''); setNotice(''); }}>Edit</button><button className="token-btn-secondary" disabled={busy} type="button" onClick={() => toggle(account)}>{account.active ? 'Nonaktifkan' : 'Aktifkan'}</button></div></div>)}</div>
+        <div className="gmail-account-list">
+          {accounts.map((account) => (
+            <div key={account.id} className="gmail-account-card">
+              <div className="gmail-card-info">
+                <div className="gmail-card-header">
+                  <strong>{account.label}</strong>
+                  <span className={`status-pill ${account.active ? 'active' : 'inactive'}`}>
+                    {account.active ? 'Aktif' : 'Nonaktif'}
+                  </span>
+                </div>
+                <p className="gmail-card-address">{account.address}</p>
+              </div>
+              <div className="gmail-account-actions">
+                <button
+                  className="token-btn-secondary"
+                  disabled={busy}
+                  type="button"
+                  onClick={() => {
+                    setEditing(account);
+                    setForm({ ...empty, label: account.label, address: account.address });
+                    setGeneratedKey(false);
+                    setError('');
+                    setNotice('');
+                  }}
+                >
+                  Edit
+                </button>
+                <button
+                  className="token-btn-secondary"
+                  disabled={busy}
+                  type="button"
+                  onClick={() => toggle(account)}
+                >
+                  {account.active ? 'Nonaktifkan' : 'Aktifkan'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
         <p className="gmail-hint">Menonaktifkan akun memblokir akses inbox asli dan semua aliasnya. Riwayat alokasi tetap disimpan agar alamat tidak digunakan ulang.</p>
       </div>
     </div>
