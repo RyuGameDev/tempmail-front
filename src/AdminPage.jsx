@@ -408,14 +408,17 @@ export function AdminPage({ onBackToMail }) {
                         min="1"
                       />
                     </label>
-                    <label className="checkbox-field unlimited-toggle">
-                      <input
-                        type="checkbox"
-                        checked={isUnlimited}
-                        onChange={(e) => setIsUnlimited(e.target.checked)}
-                      />
-                      <span>VIP Unlimited (-1)</span>
-                    </label>
+                    <div className="unlimited-switch-wrap">
+                      <label className="theme-switch" title="Toggle VIP Unlimited">
+                        <input
+                          type="checkbox"
+                          checked={isUnlimited}
+                          onChange={(e) => setIsUnlimited(e.target.checked)}
+                        />
+                        <span className="theme-switch-slider" />
+                      </label>
+                      <span className="unlimited-switch-text">VIP Unlimited (-1)</span>
+                    </div>
                   </div>
 
                   <div className="quick-quota-tags">
@@ -428,26 +431,31 @@ export function AdminPage({ onBackToMail }) {
 
                 {/* CENTANG IZIN AKSES GMAIL ASLI */}
                 <div className={`permission-toggle-box ${formAllowGmailOriginal ? 'enabled' : ''}`}>
-                  <label className="permission-toggle-label">
+                  <div className="permission-toggle-info">
+                    <div className="permission-title-row">
+                      <div className="permission-icon-wrap">
+                        <Mail size={16} />
+                      </div>
+                      <div className="permission-heading-wrap">
+                        <strong>Izin Akses Gmail Asli</strong>
+                        <span className={`status-pill ${formAllowGmailOriginal ? 'active' : 'inactive'}`}>
+                          {formAllowGmailOriginal ? 'Diizinkan' : 'Dilarang'}
+                        </span>
+                      </div>
+                    </div>
+                    <p>
+                      {formAllowGmailOriginal
+                        ? '✓ Token ini berhak membuka inbox akun Gmail asli di tab Gmail.'
+                        : '🚫 Token ini dilarang membuka inbox akun Gmail asli.'}
+                    </p>
+                  </div>
+                  <label className="theme-switch" title="Toggle Izin Gmail Asli">
                     <input
                       type="checkbox"
                       checked={formAllowGmailOriginal}
                       onChange={(e) => setFormAllowGmailOriginal(e.target.checked)}
                     />
-                    <div className="permission-toggle-info">
-                      <div className="permission-title-row">
-                        <Mail size={16} />
-                        <strong>Centang Izin Akses Gmail Asli</strong>
-                        <span className={`status-pill ${formAllowGmailOriginal ? 'active' : 'inactive'}`}>
-                          {formAllowGmailOriginal ? 'Diizinkan' : 'Dilarang'}
-                        </span>
-                      </div>
-                      <p>
-                        {formAllowGmailOriginal
-                          ? '✓ Token ini berhak membuka inbox akun Gmail asli di tab Gmail.'
-                          : '🚫 Centang untuk memberi izin token ini membuka inbox Gmail asli.'}
-                      </p>
-                    </div>
+                    <span className="theme-switch-slider" />
                   </label>
                 </div>
 
