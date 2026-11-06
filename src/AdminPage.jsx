@@ -47,6 +47,7 @@ export function AdminPage({ onBackToMail }) {
   const [formQuota, setFormQuota] = useState(500);
   const [isUnlimited, setIsUnlimited] = useState(false);
   const [disallowedDomains, setDisallowedDomains] = useState([]);
+  const [formAllowGmailDot, setFormAllowGmailDot] = useState(false);
   const [formAllowGmailOriginal, setFormAllowGmailOriginal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -171,6 +172,7 @@ export function AdminPage({ onBackToMail }) {
         token: tokenVal,
         quota: quotaVal,
         disallowedDomains: disallowedDomains,
+        allowGmailDot: formAllowGmailDot,
         allowGmailOriginal: formAllowGmailOriginal
       });
 
@@ -186,6 +188,7 @@ export function AdminPage({ onBackToMail }) {
         setFormQuota(500);
         setIsUnlimited(false);
         setDisallowedDomains([]);
+        setFormAllowGmailDot(false);
         setFormAllowGmailOriginal(false);
         await fetchTokens(adminKey);
       }
@@ -210,6 +213,7 @@ export function AdminPage({ onBackToMail }) {
       setFormQuota(t.quota);
     }
     setDisallowedDomains(t.disallowedDomains || []);
+    setFormAllowGmailDot(Boolean(t.allowGmailDot));
     setFormAllowGmailOriginal(Boolean(t.allowGmailOriginal));
     window.scrollTo({ top: 120, behavior: 'smooth' });
   };
@@ -429,34 +433,72 @@ export function AdminPage({ onBackToMail }) {
                   </div>
                 </div>
 
-                {/* CENTANG IZIN AKSES GMAIL ASLI */}
-                <div className={`permission-toggle-box ${formAllowGmailOriginal ? 'enabled' : ''}`}>
-                  <div className="permission-toggle-info">
-                    <div className="permission-title-row">
-                      <div className="permission-icon-wrap">
-                        <Mail size={16} />
-                      </div>
-                      <div className="permission-heading-wrap">
-                        <strong>Izin Akses Gmail Asli</strong>
-                        <span className={`status-pill ${formAllowGmailOriginal ? 'active' : 'inactive'}`}>
-                          {formAllowGmailOriginal ? 'Diizinkan' : 'Dilarang'}
-                        </span>
-                      </div>
-                    </div>
-                    <p>
-                      {formAllowGmailOriginal
-                        ? '✓ Token ini berhak membuka inbox akun Gmail asli di tab Gmail.'
-                        : '🚫 Token ini dilarang membuka inbox akun Gmail asli.'}
-                    </p>
+                {/* DUA IZIN GMAIL: GMAIL DOT TRICK & GMAIL ASLI */}
+                <div className="gmail-permissions-wrapper">
+                  <div className="permissions-group-header">
+                    <Mail size={15} />
+                    <span>Izin Layanan Gmail</span>
                   </div>
-                  <label className="theme-switch" title="Toggle Izin Gmail Asli">
-                    <input
-                      type="checkbox"
-                      checked={formAllowGmailOriginal}
-                      onChange={(e) => setFormAllowGmailOriginal(e.target.checked)}
-                    />
-                    <span className="theme-switch-slider" />
-                  </label>
+
+                  {/* Toggle 1: Gmail Dot Trick */}
+                  <div className={`permission-toggle-box ${formAllowGmailDot ? 'enabled' : ''}`}>
+                    <div className="permission-toggle-info">
+                      <div className="permission-title-row">
+                        <div className="permission-icon-wrap">
+                          <Mail size={15} />
+                        </div>
+                        <div className="permission-heading-wrap">
+                          <strong>Izin Gmail Dot Trick</strong>
+                          <span className={`status-pill ${formAllowGmailDot ? 'active' : 'inactive'}`}>
+                            {formAllowGmailDot ? 'Diizinkan' : 'Dilarang'}
+                          </span>
+                        </div>
+                      </div>
+                      <p>
+                        {formAllowGmailDot
+                          ? '✓ Token ini berhak membuat alias dot trick Gmail.'
+                          : '🚫 Token ini dilarang membuat alias dot trick Gmail.'}
+                      </p>
+                    </div>
+                    <label className="theme-switch" title="Toggle Izin Gmail Dot Trick">
+                      <input
+                        type="checkbox"
+                        checked={formAllowGmailDot}
+                        onChange={(e) => setFormAllowGmailDot(e.target.checked)}
+                      />
+                      <span className="theme-switch-slider" />
+                    </label>
+                  </div>
+
+                  {/* Toggle 2: Gmail Asli */}
+                  <div className={`permission-toggle-box ${formAllowGmailOriginal ? 'enabled' : ''}`}>
+                    <div className="permission-toggle-info">
+                      <div className="permission-title-row">
+                        <div className="permission-icon-wrap">
+                          <Lock size={15} />
+                        </div>
+                        <div className="permission-heading-wrap">
+                          <strong>Izin Akses Gmail Asli</strong>
+                          <span className={`status-pill ${formAllowGmailOriginal ? 'active' : 'inactive'}`}>
+                            {formAllowGmailOriginal ? 'Diizinkan' : 'Dilarang'}
+                          </span>
+                        </div>
+                      </div>
+                      <p>
+                        {formAllowGmailOriginal
+                          ? '✓ Token ini berhak membuka inbox akun Gmail asli di tab Gmail.'
+                          : '🚫 Token ini dilarang membuka inbox akun Gmail asli.'}
+                      </p>
+                    </div>
+                    <label className="theme-switch" title="Toggle Izin Gmail Asli">
+                      <input
+                        type="checkbox"
+                        checked={formAllowGmailOriginal}
+                        onChange={(e) => setFormAllowGmailOriginal(e.target.checked)}
+                      />
+                      <span className="theme-switch-slider" />
+                    </label>
+                  </div>
                 </div>
 
                 {/* Domain Restrictions */}
@@ -506,6 +548,7 @@ export function AdminPage({ onBackToMail }) {
                         setFormQuota(500);
                         setIsUnlimited(false);
                         setDisallowedDomains([]);
+                        setFormAllowGmailDot(false);
                         setFormAllowGmailOriginal(false);
                       }}
                     >
@@ -592,6 +635,18 @@ export function AdminPage({ onBackToMail }) {
                           <span className={`token-quota-pill ${t.quota === -1 ? 'vip' : t.quota === 0 ? 'exhausted' : ''}`}>
                             {t.quota === -1 ? 'VIP Unlimited' : `${t.quota} email tersisa`}
                           </span>
+
+                          {t.allowGmailDot ? (
+                            <span className="token-permission-badge allowed" title="Token ini boleh buat alias Gmail dot trick">
+                              <CheckCircle2 size={13} />
+                              <span>Dot Trick: Boleh</span>
+                            </span>
+                          ) : (
+                            <span className="token-permission-badge blocked" title="Token ini dilarang buat alias Gmail dot trick">
+                              <Lock size={13} />
+                              <span>Dot Trick: Dilarang</span>
+                            </span>
+                          )}
 
                           {t.allowGmailOriginal ? (
                             <span className="token-permission-badge allowed" title="Token ini boleh akses Gmail asli">

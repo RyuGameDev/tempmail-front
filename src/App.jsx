@@ -928,7 +928,7 @@ export function App() {
         <button type="button" aria-pressed={mailTab === 'tempmail'} onClick={() => setMailTab('tempmail')}><Mail size={18} /> Temp Mail</button>
         <button type="button" aria-pressed={mailTab === 'gmail'} onClick={() => setMailTab('gmail')}><Inbox size={18} /> Gmail</button>
       </nav>
-      {mailTab === 'gmail' ? <GmailPage token={token} onInputToken={() => promptInputToken()} onAliasCreated={() => refreshUserToken()} /> : <section className="workspace">
+      {mailTab === 'gmail' ? <GmailPage token={token} tokenInfo={tokenInfo} onInputToken={() => promptInputToken()} onAliasCreated={() => refreshUserToken()} /> : <section className="workspace">
         <aside className="control-panel">
           <div className="panel-heading">
             <Mail size={22} />

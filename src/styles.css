@@ -2627,6 +2627,37 @@ input[type="radio"]:checked::after {
   color: #ffffff;
 }
 
+.gmail-permissions-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.03);
+  border: 1px solid rgba(112, 128, 150, 0.16);
+  border-radius: 16px;
+  padding: 14px;
+}
+
+:root[data-theme="dark"] .gmail-permissions-wrapper {
+  background: rgba(15, 23, 42, 0.35);
+  border-color: rgba(168, 185, 210, 0.12);
+}
+
+.permissions-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #3b82f6;
+  padding-left: 2px;
+}
+
+:root[data-theme="dark"] .permissions-group-header {
+  color: #60a5fa;
+}
+
 /* CENTANG IZIN AKSES GMAIL ASLI */
 .permission-toggle-box {
   display: flex;

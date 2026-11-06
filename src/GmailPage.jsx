@@ -21,7 +21,7 @@ function savedAliases() {
   catch { return []; }
 }
 
-export function GmailPage({ token, onInputToken, onAliasCreated }) {
+export function GmailPage({ token, tokenInfo, onInputToken, onAliasCreated }) {
   const [mode, setMode] = useState('aliases');
   const [accounts, setAccounts] = useState([]);
   const [accountId, setAccountId] = useState('');

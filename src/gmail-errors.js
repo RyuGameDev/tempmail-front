@@ -1,6 +1,7 @@
 export function gmailError(error) {
   const messages = {
-    GMAIL_ACCESS_DENIED: 'Kunci akses Gmail asli salah atau akun tidak aktif.',
+    GMAIL_ACCESS_DENIED: 'Kunci akses Gmail asli salah atau token ini belum diberi izin akses Gmail asli.',
+    GMAIL_DOT_FORBIDDEN: 'Token ini tidak memiliki izin untuk membuat alias Gmail Dot Trick. Hubungi admin untuk mengaktifkan izin.',
     GMAIL_ACCESS_RATE_LIMITED: 'Terlalu banyak kunci yang salah. Coba lagi dalam 5 menit.',
     GMAIL_ALIAS_UNAUTHORIZED: 'Kunci alias tidak valid. Pilih alias dari riwayat perangkat ini.',
     GMAIL_ACCOUNT_UNAVAILABLE: 'Akun Gmail ini tidak aktif atau tidak tersedia.',
