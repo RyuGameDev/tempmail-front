@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import Swal from 'sweetalert2';
 import {
+  Bell,
+  BellOff,
+  BellRing,
   CheckCircle2,
   Copy,
   History,
@@ -14,6 +18,13 @@ import {
 } from 'lucide-react';
 import { api } from './api.js';
 import { gmailError } from './gmail-errors.js';
+import {
+  isNotificationSupported,
+  requestNotificationPermission,
+  isMailboxNotificationEnabled,
+  setMailboxNotificationEnabled,
+  sendEmailNotification
+} from './notifications.js';
 
 const HISTORY_KEY = 'ryudev-gmail-aliases-v1';
 function savedAliases() {
@@ -40,7 +51,57 @@ export function GmailPage({ token, tokenInfo, onInputToken, onAliasCreated }) {
   const [reading, setReading] = useState(false);
   const [loadingAccounts, setLoadingAccounts] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [isInboxNotifEnabled, setIsInboxNotifEnabled] = useState(false);
   const actionVersion = useRef(0);
+
+  useEffect(() => {
+    if (inbox?.address) {
+      setIsInboxNotifEnabled(isMailboxNotificationEnabled(inbox.address));
+    } else {
+      setIsInboxNotifEnabled(false);
+    }
+  }, [inbox?.address]);
+
+  const handleToggleInboxNotif = async (enabled) => {
+    if (!isNotificationSupported()) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Tidak Didukung',
+        text: 'Browser ini tidak mendukung notifikasi desktop Web API.'
+      });
+      return;
+    }
+
+    if (enabled && Notification.permission !== 'granted') {
+      const perm = await requestNotificationPermission();
+      if (perm !== 'granted') {
+        if (perm === 'denied') {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Izin Notifikasi Diblokir',
+            html: '<p>Browser kamu memblokir notifikasi untuk situs ini.</p><p style="font-size:0.85rem;color:#94a3b8;margin-top:8px;">Untuk mengaktifkannya, klik ikon setelan/gembok di sebelah kiri URL browser kamu lalu pilih <b>Izinkan (Allow)</b> pada Notifikasi.</p>'
+          });
+        }
+        setIsInboxNotifEnabled(false);
+        if (inbox?.address) setMailboxNotificationEnabled(inbox.address, false);
+        return;
+      }
+    }
+
+    setIsInboxNotifEnabled(enabled);
+    if (inbox?.address) {
+      setMailboxNotificationEnabled(inbox.address, enabled);
+      if (enabled) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Notifikasi Aktif!',
+          text: `Notifikasi Chrome akan muncul setiap ada email masuk untuk ${inbox.address}`,
+          timer: 1800,
+          showConfirmButton: false
+        });
+      }
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -69,7 +130,24 @@ export function GmailPage({ token, tokenInfo, onInputToken, onAliasCreated }) {
       try {
         const result = await api.gmailEmails(inbox, cursor, controller.signal);
         if (controller.signal.aborted) return;
-        setEmails(result.emails); setNextCursor(result.nextCursor); setError('');
+        setEmails((current) => {
+          if (current.length > 0 && result.emails?.length > 0 && !cursor) {
+            const currentIds = new Set(current.map((e) => e.id));
+            const newEmails = result.emails.filter((e) => !currentIds.has(e.id));
+            if (newEmails.length > 0) {
+              newEmails.forEach((ne) => {
+                sendEmailNotification({
+                  email: ne,
+                  mailboxAddress: inbox.address,
+                  onClick: () => setMessageId(ne.id)
+                });
+              });
+            }
+          }
+          return result.emails;
+        });
+        setNextCursor(result.nextCursor);
+        setError('');
         if (result.address) setInbox((current) => current?.id === inbox.id && current?.key === inbox.key ? { ...current, address: result.address } : current);
       } catch (e) {
         if (controller.signal.aborted) return;
@@ -79,9 +157,8 @@ export function GmailPage({ token, tokenInfo, onInputToken, onAliasCreated }) {
         }
       } finally { if (!controller.signal.aborted) setLoading(false); }
       if (!controller.signal.aborted && !cursor) timer = setTimeout(() => {
-        if (document.visibilityState === 'visible') load();
-        else timer = setTimeout(load, 30000);
-      }, 30000);
+        load();
+      }, 15000);
     }
     load();
     return () => { controller.abort(); clearTimeout(timer); };
@@ -252,6 +329,24 @@ export function GmailPage({ token, tokenInfo, onInputToken, onAliasCreated }) {
                 {copied ? <CheckCircle2 size={17} /> : <Copy size={17} />}
                 {copied ? 'Copied' : 'Copy'}
               </button>
+            </div>
+
+            <div className={`mailbox-notif-switch-box ${isInboxNotifEnabled ? 'enabled' : ''}`}>
+              <div className="notif-switch-info">
+                <div className="notif-switch-title">
+                  {isInboxNotifEnabled ? <BellRing size={14} className="text-success" /> : <BellOff size={14} />}
+                  <span>Notifikasi Email Ini</span>
+                </div>
+                <p>{isInboxNotifEnabled ? 'Notifikasi Chrome aktif' : 'Notifikasi dimatikan'}</p>
+              </div>
+              <label className="theme-switch" title="Nyalakan/matikan notifikasi Chrome untuk email ini">
+                <input
+                  type="checkbox"
+                  checked={isInboxNotifEnabled}
+                  onChange={(e) => handleToggleInboxNotif(e.target.checked)}
+                />
+                <span className="theme-switch-slider" />
+              </label>
             </div>
           </div>
         )}
