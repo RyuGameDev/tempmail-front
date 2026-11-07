@@ -23,7 +23,9 @@ import {
   requestNotificationPermission,
   isMailboxNotificationEnabled,
   setMailboxNotificationEnabled,
-  sendEmailNotification
+  sendEmailNotification,
+  subscribeUserToPush,
+  unsubscribeUserFromPush
 } from './notifications.js';
 
 const HISTORY_KEY = 'ryudev-gmail-aliases-v1';
@@ -90,15 +92,17 @@ export function GmailPage({ token, tokenInfo, onInputToken, onAliasCreated }) {
 
     setIsInboxNotifEnabled(enabled);
     if (inbox?.address) {
-      setMailboxNotificationEnabled(inbox.address, enabled);
       if (enabled) {
+        await subscribeUserToPush(inbox.address);
         Swal.fire({
           icon: 'success',
           title: 'Notifikasi Aktif!',
-          text: `Notifikasi Chrome akan muncul setiap ada email masuk untuk ${inbox.address}`,
-          timer: 1800,
+          text: `Notifikasi Chrome aktif untuk ${inbox.address}. Pesan baru akan tetap masuk meskipun website ini ditutup.`,
+          timer: 2400,
           showConfirmButton: false
         });
+      } else {
+        await unsubscribeUserFromPush(inbox.address);
       }
     }
   };

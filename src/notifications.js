@@ -1,9 +1,19 @@
-// Web Browser Notifications Helper for Ryudev Temp Mail & Gmail
+// Web Browser & Web Push Notifications Helper for Ryudev Temp Mail & Gmail
+import { api } from './api.js';
 
 const NOTIF_PREFIX = 'ryudev_notif_mailbox_';
 
 export function isNotificationSupported() {
   return typeof window !== 'undefined' && 'Notification' in window;
+}
+
+export function isWebPushSupported() {
+  return (
+    typeof window !== 'undefined' &&
+    'serviceWorker' in navigator &&
+    'PushManager' in window &&
+    'Notification' in window
+  );
 }
 
 export function getNotificationPermission() {
@@ -34,6 +44,106 @@ export function isMailboxNotificationEnabled(address) {
 export function setMailboxNotificationEnabled(address, enabled) {
   if (!address) return;
   localStorage.setItem(NOTIF_PREFIX + address.toLowerCase(), enabled ? '1' : '0');
+}
+
+export function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+export async function registerServiceWorker() {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+    return null;
+  }
+  try {
+    const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    await navigator.serviceWorker.ready;
+    return reg;
+  } catch (err) {
+    console.error('Service worker registration failed:', err);
+    return null;
+  }
+}
+
+export async function subscribeUserToPush(address) {
+  if (!address) return false;
+
+  // 1. Ensure permission is granted
+  if (Notification.permission !== 'granted') {
+    const perm = await requestNotificationPermission();
+    if (perm !== 'granted') return false;
+  }
+
+  // 2. Register Service Worker & get Push Subscription
+  try {
+    const reg = await registerServiceWorker();
+    if (!reg || !('pushManager' in reg)) {
+      setMailboxNotificationEnabled(address, true);
+      return true;
+    }
+
+    const { publicKey } = await api.getVapidPublicKey();
+    if (!publicKey) {
+      setMailboxNotificationEnabled(address, true);
+      return true;
+    }
+
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey)
+      });
+    }
+
+    const subJson = sub.toJSON();
+    await api.pushSubscribe({
+      address: address.toLowerCase(),
+      subscription: {
+        endpoint: sub.endpoint,
+        keys: {
+          p256dh: subJson.keys?.p256dh || '',
+          auth: subJson.keys?.auth || ''
+        }
+      }
+    });
+
+    setMailboxNotificationEnabled(address, true);
+    return true;
+  } catch (err) {
+    console.error('Failed to subscribe to Web Push:', err);
+    // Fallback to local notification flag if PushManager fails (e.g. Incognito mode)
+    setMailboxNotificationEnabled(address, true);
+    return true;
+  }
+}
+
+export async function unsubscribeUserFromPush(address) {
+  if (!address) return;
+  setMailboxNotificationEnabled(address, false);
+
+  try {
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg && reg.pushManager) {
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          await api.pushUnsubscribe({
+            address: address.toLowerCase(),
+            endpoint: sub.endpoint
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Failed to unsubscribe from Web Push:', err);
+  }
 }
 
 export function playNotificationSound() {
@@ -127,4 +237,3 @@ export function sendEmailNotification({ email, mailboxAddress, onClick }) {
     return null;
   }
 }
-

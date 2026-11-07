@@ -37,7 +37,9 @@ import {
   requestNotificationPermission,
   isMailboxNotificationEnabled,
   setMailboxNotificationEnabled,
-  sendEmailNotification
+  sendEmailNotification,
+  subscribeUserToPush,
+  unsubscribeUserFromPush
 } from './notifications.js';
 
 const savedMailboxKey = 'ryudev-temp-mailbox-id';
@@ -934,15 +936,17 @@ export function App() {
 
     setIsMailboxNotifEnabled(enabled);
     if (mailbox?.address) {
-      setMailboxNotificationEnabled(mailbox.address, enabled);
       if (enabled) {
+        await subscribeUserToPush(mailbox.address);
         Swal.fire({
           icon: 'success',
           title: 'Notifikasi Aktif!',
-          text: `Notifikasi Chrome akan muncul setiap ada email masuk untuk ${mailbox.address}`,
-          timer: 1800,
+          text: `Notifikasi Chrome aktif untuk ${mailbox.address}. Pesan baru akan tetap masuk meskipun website ini ditutup.`,
+          timer: 2400,
           showConfirmButton: false
         });
+      } else {
+        await unsubscribeUserFromPush(mailbox.address);
       }
     }
   };

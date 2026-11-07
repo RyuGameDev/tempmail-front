@@ -88,5 +88,21 @@ export const api = {
     request(`/api/admin/tokens/${encodeURIComponent(token)}`, {
       method: 'DELETE',
       headers: { 'x-admin-key': adminKey }
+    }),
+  getVapidPublicKey: () => request('/api/push/vapid-public-key'),
+  pushSubscribe: (payload) =>
+    request('/api/push/subscribe', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+  pushUnsubscribe: (payload) =>
+    request('/api/push/unsubscribe', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+  pushTest: (address) =>
+    request('/api/push/test', {
+      method: 'POST',
+      body: JSON.stringify({ address })
     })
 };
