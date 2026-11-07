@@ -34,7 +34,6 @@ import { AdminPage } from './AdminPage.jsx';
 import { GmailPage } from './GmailPage.jsx';
 import {
   isNotificationSupported,
-  getNotificationPermission,
   requestNotificationPermission,
   isMailboxNotificationEnabled,
   setMailboxNotificationEnabled,
@@ -255,10 +254,8 @@ export function App() {
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [pricingSlide, setPricingSlide] = useState(0);
 
-  // Notification states
-  const [notifPermission, setNotifPermission] = useState(getNotificationPermission);
+  // Notification state per active mailbox
   const [isMailboxNotifEnabled, setIsMailboxNotifEnabled] = useState(false);
-  const [dismissedBanner, setDismissedBanner] = useState(() => localStorage.getItem('ryudev_dismissed_notif_banner') === '1');
 
   useEffect(() => {
     if (mailbox?.address) {
@@ -909,38 +906,6 @@ export function App() {
     setTimeout(() => setCopiedAddress(''), 1400);
   };
 
-  const handleRequestPermission = async () => {
-    if (!isNotificationSupported()) {
-      Swal.fire({
-        icon: 'info',
-        title: 'Tidak Didukung',
-        text: 'Browser kamu tidak mendukung notifikasi Web API.'
-      });
-      return;
-    }
-    const perm = await requestNotificationPermission();
-    setNotifPermission(perm);
-    if (perm === 'granted') {
-      if (mailbox?.address) {
-        setIsMailboxNotifEnabled(true);
-        setMailboxNotificationEnabled(mailbox.address, true);
-      }
-      Swal.fire({
-        icon: 'success',
-        title: 'Notifikasi Diaktifkan!',
-        text: 'Pemberitahuan browser Chrome kini aktif saat ada email masuk.',
-        timer: 2200,
-        showConfirmButton: false
-      });
-    } else if (perm === 'denied') {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Izin Ditolak',
-        html: '<p>Kamu memilih memblokir notifikasi di browser.</p><p style="font-size:0.85rem;color:#94a3b8;margin-top:8px;">Buka setelan browser di sebelah kiri URL (address bar) dan ubah izin Notifikasi menjadi <b>Allow</b> untuk mengaktifkannya.</p>'
-      });
-    }
-  };
-
   const handleToggleMailboxNotif = async (enabled) => {
     if (!isNotificationSupported()) {
       Swal.fire({
@@ -953,7 +918,6 @@ export function App() {
 
     if (enabled && Notification.permission !== 'granted') {
       const perm = await requestNotificationPermission();
-      setNotifPermission(perm);
       if (perm !== 'granted') {
         if (perm === 'denied') {
           Swal.fire({
@@ -1031,52 +995,6 @@ export function App() {
           <h1>{mailTab === 'gmail' ? 'Gmail Inbox' : 'Temporary Mail'}</h1>
         </div>
         <div className="topbar-actions">
-          {/* Notification Permission Trigger Button */}
-          {isNotificationSupported() && (
-            notifPermission === 'default' ? (
-              <button
-                className="notif-topbar-btn"
-                onClick={handleRequestPermission}
-                type="button"
-                title="Klik untuk aktifkan notifikasi Chrome"
-              >
-                <Bell size={16} className="notif-bell-shake" />
-                <span>Izinkan Notif</span>
-              </button>
-            ) : notifPermission === 'granted' ? (
-              <button
-                className="icon-button text-success"
-                onClick={() => {
-                  Swal.fire({
-                    icon: 'success',
-                    title: 'Notifikasi Aktif',
-                    text: 'Pemberitahuan browser Chrome telah diizinkan. Aktifkan switch notifikasi pada email yang kamu inginkan.',
-                    timer: 2000,
-                    showConfirmButton: false
-                  });
-                }}
-                title="Notifikasi browser aktif"
-                type="button"
-              >
-                <BellRing size={19} />
-              </button>
-            ) : (
-              <button
-                className="icon-button text-danger"
-                onClick={() => {
-                  Swal.fire({
-                    icon: 'warning',
-                    title: 'Notifikasi Diblokir',
-                    html: '<p>Notifikasi diblokir di browser kamu.</p><p style="font-size:0.85rem;color:#94a3b8;margin-top:8px;">Buka ikon setelan/gembok di URL bar browser lalu ganti Notifikasi ke Allow.</p>'
-                  });
-                }}
-                title="Notifikasi diblokir di browser. Klik untuk petunjuk"
-                type="button"
-              >
-                <BellOff size={19} />
-              </button>
-            )
-          )}
           <button className="buy-token-header-btn" onClick={() => setShowPricingModal(true)} type="button">
             <Sparkles size={16} />
             <span>Beli Token</span>
@@ -1086,36 +1004,6 @@ export function App() {
           </button>
         </div>
       </header>
-
-      {/* Notification Prompt Banner */}
-      {isNotificationSupported() && notifPermission === 'default' && !dismissedBanner && (
-        <div className="notif-permission-banner">
-          <div className="notif-banner-content">
-            <div className="notif-banner-icon">
-              <BellRing size={20} />
-            </div>
-            <div className="notif-banner-text">
-              <strong>Aktifkan Notifikasi Browser</strong>
-              <p>Dapatkan pemberitahuan langsung di Chrome saat email masuk ke alamat kamu.</p>
-            </div>
-          </div>
-          <div className="notif-banner-actions">
-            <button className="notif-banner-grant-btn" type="button" onClick={handleRequestPermission}>
-              <Bell size={15} /> Izinkan Notifikasi
-            </button>
-            <button
-              className="notif-banner-dismiss-btn"
-              type="button"
-              onClick={() => {
-                setDismissedBanner(true);
-                localStorage.setItem('ryudev_dismissed_notif_banner', '1');
-              }}
-            >
-              Nanti
-            </button>
-          </div>
-        </div>
-      )}
 
       <nav className="mail-tabs" aria-label="Jenis inbox">
         <button type="button" aria-pressed={mailTab === 'tempmail'} onClick={() => setMailTab('tempmail')}><Mail size={18} /> Temp Mail</button>

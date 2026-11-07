@@ -28,8 +28,7 @@ export function isMailboxNotificationEnabled(address) {
   if (stored !== null) {
     return stored === '1';
   }
-  // Default to enabled if user has already granted browser permission
-  return getNotificationPermission() === 'granted';
+  return false;
 }
 
 export function setMailboxNotificationEnabled(address, enabled) {
@@ -128,3 +127,4 @@ export function sendEmailNotification({ email, mailboxAddress, onClick }) {
     return null;
   }
 }
+
