@@ -1,4 +1,6 @@
 // Ryudev Temp Mail - Web Push Service Worker
+const defaultIcon = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="%234338ca"/><path d="M25 35h50a5 5 0 0 1 5 5v25a5 5 0 0 1-5 5H25a5 5 0 0 1-5-5V40a5 5 0 0 1 5-5z" fill="%23ffffff"/><path d="M22 38l28 20 28-20" fill="none" stroke="%234338ca" stroke-width="4"/></svg>';
+
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
@@ -14,22 +16,25 @@ self.addEventListener('push', (event) => {
       data = event.data.json();
     } catch {
       data = {
-        title: 'Email Baru Diterima',
+        title: '📩 Email Baru Diterima',
         body: event.data.text()
       };
     }
   }
 
   const title = data.title || '📩 Email Baru Masuk';
+  const targetUrl = (data.data && data.data.url) || data.url || '/';
+
   const options = {
     body: data.body || 'Kamu menerima pesan baru di Ryudev Temp Mail.',
-    icon: '/favicon.ico',
-    badge: '/favicon.ico',
+    icon: defaultIcon,
+    badge: defaultIcon,
     data: {
-      url: data.url || '/'
+      url: targetUrl
     },
     tag: data.tag || `email-${Date.now()}`,
     renotify: true,
+    requireInteraction: false,
     vibrate: [200, 100, 200]
   };
 
@@ -53,3 +58,4 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
+

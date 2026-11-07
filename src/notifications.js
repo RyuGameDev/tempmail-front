@@ -2,6 +2,7 @@
 import { api } from './api.js';
 
 const NOTIF_PREFIX = 'ryudev_notif_mailbox_';
+const GLOBAL_NOTIF_KEY = 'ryudev_push_enabled';
 
 export function isNotificationSupported() {
   return typeof window !== 'undefined' && 'Notification' in window;
@@ -33,17 +34,34 @@ export async function requestNotificationPermission() {
 }
 
 export function isMailboxNotificationEnabled(address) {
-  if (!address) return false;
-  const stored = localStorage.getItem(NOTIF_PREFIX + address.toLowerCase());
-  if (stored !== null) {
-    return stored === '1';
+  if (typeof window === 'undefined') return false;
+  if (!isNotificationSupported()) return false;
+  if (Notification.permission !== 'granted') return false;
+
+  const addrKey = address ? address.trim().toLowerCase() : '';
+  if (addrKey) {
+    const stored = localStorage.getItem(NOTIF_PREFIX + addrKey);
+    if (stored !== null) {
+      return stored === '1';
+    }
   }
+
+  // Fallback to global preference if set
+  const globalSetting = localStorage.getItem(GLOBAL_NOTIF_KEY);
+  if (globalSetting !== null) {
+    return globalSetting === '1';
+  }
+
   return false;
 }
 
 export function setMailboxNotificationEnabled(address, enabled) {
-  if (!address) return;
-  localStorage.setItem(NOTIF_PREFIX + address.toLowerCase(), enabled ? '1' : '0');
+  if (typeof window === 'undefined') return;
+  const val = enabled ? '1' : '0';
+  localStorage.setItem(GLOBAL_NOTIF_KEY, val);
+  if (address) {
+    localStorage.setItem(NOTIF_PREFIX + address.trim().toLowerCase(), val);
+  }
 }
 
 export function urlBase64ToUint8Array(base64String) {
@@ -74,27 +92,52 @@ export async function registerServiceWorker() {
 export async function subscribeUserToPush(address) {
   if (!address) return false;
 
+  // Persist synchronously to localStorage so reloads immediately show switch as ON
+  setMailboxNotificationEnabled(address, true);
+
   // 1. Ensure permission is granted
   if (Notification.permission !== 'granted') {
     const perm = await requestNotificationPermission();
-    if (perm !== 'granted') return false;
+    if (perm !== 'granted') {
+      setMailboxNotificationEnabled(address, false);
+      return false;
+    }
   }
 
   // 2. Register Service Worker & get Push Subscription
   try {
     const reg = await registerServiceWorker();
     if (!reg || !('pushManager' in reg)) {
-      setMailboxNotificationEnabled(address, true);
       return true;
     }
 
     const { publicKey } = await api.getVapidPublicKey();
     if (!publicKey) {
-      setMailboxNotificationEnabled(address, true);
       return true;
     }
 
     let sub = await reg.pushManager.getSubscription();
+    // Validate existing subscription key:
+    if (sub) {
+      try {
+        const rawKey = sub.options?.applicationServerKey;
+        if (rawKey) {
+          const currentKeyB64 = btoa(String.fromCharCode.apply(null, new Uint8Array(rawKey)))
+            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+          const cleanPublic = publicKey.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+          if (currentKeyB64 && currentKeyB64 !== cleanPublic) {
+            console.warn('[WebPush] VAPID key mismatch, renewing push subscription...');
+            await sub.unsubscribe();
+            sub = null;
+          }
+        }
+      } catch (err) {
+        console.warn('[WebPush] Error inspecting existing subscription, renewing:', err);
+        await sub.unsubscribe().catch(() => {});
+        sub = null;
+      }
+    }
+
     if (!sub) {
       sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
@@ -104,7 +147,7 @@ export async function subscribeUserToPush(address) {
 
     const subJson = sub.toJSON();
     await api.pushSubscribe({
-      address: address.toLowerCase(),
+      address: address.trim().toLowerCase(),
       subscription: {
         endpoint: sub.endpoint,
         keys: {
@@ -118,14 +161,13 @@ export async function subscribeUserToPush(address) {
     return true;
   } catch (err) {
     console.error('Failed to subscribe to Web Push:', err);
-    // Fallback to local notification flag if PushManager fails (e.g. Incognito mode)
+    // Keep local flag enabled so in-tab notifications still work
     setMailboxNotificationEnabled(address, true);
     return true;
   }
 }
 
 export async function unsubscribeUserFromPush(address) {
-  if (!address) return;
   setMailboxNotificationEnabled(address, false);
 
   try {
@@ -135,7 +177,7 @@ export async function unsubscribeUserFromPush(address) {
         const sub = await reg.pushManager.getSubscription();
         if (sub) {
           await api.pushUnsubscribe({
-            address: address.toLowerCase(),
+            address: address ? address.trim().toLowerCase() : '',
             endpoint: sub.endpoint
           });
         }

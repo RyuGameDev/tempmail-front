@@ -29,9 +29,19 @@ import {
 } from './notifications.js';
 
 const HISTORY_KEY = 'ryudev-gmail-aliases-v1';
+const GMAIL_ACTIVE_INBOX_KEY = 'ryudev_gmail_active_inbox_id';
 function savedAliases() {
   try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]').filter((a) => a.id && a.address && a.key).slice(0, 100); }
   catch { return []; }
+}
+function getInitialGmailInbox() {
+  const saved = savedAliases();
+  const lastId = typeof localStorage !== 'undefined' ? localStorage.getItem(GMAIL_ACTIVE_INBOX_KEY) : null;
+  if (lastId && saved.length > 0) {
+    const found = saved.find((a) => a.id === lastId);
+    if (found) return found;
+  }
+  return saved[0] || null;
 }
 
 export function GmailPage({ token, tokenInfo, onInputToken, onAliasCreated }) {
@@ -39,7 +49,7 @@ export function GmailPage({ token, tokenInfo, onInputToken, onAliasCreated }) {
   const [accounts, setAccounts] = useState([]);
   const [accountId, setAccountId] = useState('');
   const [history, setHistory] = useState(savedAliases);
-  const [inbox, setInbox] = useState(null);
+  const [inbox, setInbox] = useState(getInitialGmailInbox);
   const [password, setPassword] = useState('');
   const [emails, setEmails] = useState([]);
   const [messageId, setMessageId] = useState('');
@@ -53,12 +63,19 @@ export function GmailPage({ token, tokenInfo, onInputToken, onAliasCreated }) {
   const [reading, setReading] = useState(false);
   const [loadingAccounts, setLoadingAccounts] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [isInboxNotifEnabled, setIsInboxNotifEnabled] = useState(false);
+  const [isInboxNotifEnabled, setIsInboxNotifEnabled] = useState(() => {
+    const initial = getInitialGmailInbox();
+    return initial?.address ? isMailboxNotificationEnabled(initial.address) : false;
+  });
   const actionVersion = useRef(0);
 
   useEffect(() => {
     if (inbox?.address) {
-      setIsInboxNotifEnabled(isMailboxNotificationEnabled(inbox.address));
+      const enabled = isMailboxNotificationEnabled(inbox.address);
+      setIsInboxNotifEnabled(enabled);
+      if (enabled) {
+        subscribeUserToPush(inbox.address).catch(() => {});
+      }
     } else {
       setIsInboxNotifEnabled(false);
     }
@@ -93,6 +110,7 @@ export function GmailPage({ token, tokenInfo, onInputToken, onAliasCreated }) {
     setIsInboxNotifEnabled(enabled);
     if (inbox?.address) {
       if (enabled) {
+        setMailboxNotificationEnabled(inbox.address, true);
         await subscribeUserToPush(inbox.address);
         Swal.fire({
           icon: 'success',
@@ -118,6 +136,11 @@ export function GmailPage({ token, tokenInfo, onInputToken, onAliasCreated }) {
 
   function selectInbox(next) {
     actionVersion.current++;
+    if (next?.id) {
+      localStorage.setItem(GMAIL_ACTIVE_INBOX_KEY, next.id);
+    } else {
+      localStorage.removeItem(GMAIL_ACTIVE_INBOX_KEY);
+    }
     setInbox(next); setEmails([]); setMessageId(''); setMessage(null); setCursor(''); setNextCursor(null); setError(''); setPassword(''); setCopied(false); setLoading(false); setReading(false);
   }
   function switchMode(next) {

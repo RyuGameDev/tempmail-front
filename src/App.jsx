@@ -148,6 +148,16 @@ function getSavedMailboxHistory() {
   }
 }
 
+function getInitialMailbox() {
+  const history = getSavedMailboxHistory();
+  const savedId = typeof localStorage !== 'undefined' ? localStorage.getItem(savedMailboxKey) : null;
+  if (savedId && history.length > 0) {
+    const found = history.find((m) => m.id === savedId);
+    if (found) return found;
+  }
+  return history[0] || null;
+}
+
 function getErrorMessage(error) {
   const message = error?.message || 'REQUEST_FAILED';
   const messages = {
@@ -237,7 +247,7 @@ export function App() {
   const [domains, setDomains] = useState([]);
   const [selectedDomain, setSelectedDomain] = useState('');
   const [customName, setCustomName] = useState('');
-  const [mailbox, setMailbox] = useState(null);
+  const [mailbox, setMailbox] = useState(getInitialMailbox);
   const [mailboxHistory, setMailboxHistory] = useState(getSavedMailboxHistory);
   const [emails, setEmails] = useState([]);
   const [selectedEmail, setSelectedEmail] = useState(null);
@@ -257,11 +267,18 @@ export function App() {
   const [pricingSlide, setPricingSlide] = useState(0);
 
   // Notification state per active mailbox
-  const [isMailboxNotifEnabled, setIsMailboxNotifEnabled] = useState(false);
+  const [isMailboxNotifEnabled, setIsMailboxNotifEnabled] = useState(() => {
+    const initial = getInitialMailbox();
+    return initial?.address ? isMailboxNotificationEnabled(initial.address) : false;
+  });
 
   useEffect(() => {
     if (mailbox?.address) {
-      setIsMailboxNotifEnabled(isMailboxNotificationEnabled(mailbox.address));
+      const enabled = isMailboxNotificationEnabled(mailbox.address);
+      setIsMailboxNotifEnabled(enabled);
+      if (enabled) {
+        subscribeUserToPush(mailbox.address).catch(() => {});
+      }
     } else {
       setIsMailboxNotifEnabled(false);
     }
@@ -937,6 +954,7 @@ export function App() {
     setIsMailboxNotifEnabled(enabled);
     if (mailbox?.address) {
       if (enabled) {
+        setMailboxNotificationEnabled(mailbox.address, true);
         await subscribeUserToPush(mailbox.address);
         Swal.fire({
           icon: 'success',
